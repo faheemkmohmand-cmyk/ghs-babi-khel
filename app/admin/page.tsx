@@ -1,129 +1,127 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import AdminLayout from '@/components/admin/AdminLayout'
+import Link from 'next/link'
 
 export default async function AdminPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles').select('role,full_name').eq('id', user.id).single()
-
+  const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  const { count: studentCount } = await supabase
-    .from('students').select('*', { count: 'exact', head: true })
-
-  const { count: teacherCount } = await supabase
-    .from('teachers').select('*', { count: 'exact', head: true })
-
-  const { count: noticeCount } = await supabase
-    .from('notices').select('*', { count: 'exact', head: true }).eq('published', true)
+  const [{ count: students }, { count: teachers }, { count: notices }, { count: news }] = await Promise.all([
+    supabase.from('students').select('*', { count: 'exact', head: true }),
+    supabase.from('teachers').select('*', { count: 'exact', head: true }),
+    supabase.from('notices').select('*', { count: 'exact', head: true }).eq('published', true),
+    supabase.from('news').select('*', { count: 'exact', head: true }).eq('published', true),
+  ])
 
   const { data: recentStudents } = await supabase
-    .from('profiles')
-    .select('id,full_name,created_at,role')
-    .eq('role', 'student')
-    .order('created_at', { ascending: false })
-    .limit(5)
+    .from('profiles').select('id,full_name,created_at').eq('role','student')
+    .order('created_at', { ascending: false }).limit(5)
+
+  const { data: exams } = await supabase
+    .from('exams').select('id,name,start_date,status').eq('status','upcoming')
+    .order('start_date', { ascending: true }).limit(3)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Topbar */}
-      <nav className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-sm">🏫</div>
-            <span className="font-display font-bold text-slate-800 text-sm">GHS Admin Panel</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-slate-500 text-sm hidden sm:block">{profile?.full_name}</span>
-            <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">ADMIN</span>
-            <form action="/auth/signout" method="post">
-              <button type="submit"
-                className="text-xs text-slate-400 hover:text-red-500 font-semibold border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">
-                Sign Out
-              </button>
-            </form>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-green-950 rounded-3xl p-6 md:p-8 text-white mb-8 relative overflow-hidden">
-          <div className="absolute right-6 top-6 text-8xl opacity-10 pointer-events-none">⚙️</div>
-          <div className="relative z-10">
-            <p className="text-white/50 text-sm font-semibold mb-1">Admin Dashboard</p>
-            <h1 className="font-display text-2xl md:text-3xl font-black mb-2">Welcome, {profile?.full_name || 'Admin'}</h1>
-            <p className="text-white/50 text-sm">Manage the school from here. All changes are live instantly.</p>
-          </div>
+    <AdminLayout adminName={profile?.full_name || 'Admin'}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="font-display text-2xl font-black text-slate-800">Dashboard Overview</h1>
+          <p className="text-slate-500 text-sm mt-1">Welcome back, {profile?.full_name}. Here's what's happening.</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: '🎓', label: 'Students', value: studentCount ?? 0, bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-100' },
-            { icon: '👨‍🏫', label: 'Teachers', value: teacherCount ?? 0, bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-100' },
-            { icon: '📢', label: 'Notices', value: noticeCount ?? 0, bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
-            { icon: '📚', label: 'Classes', value: 12, bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100' },
+            { icon:'🎓', label:'Total Students', value: students ?? 0, bg:'bg-green-50', text:'text-green-700', border:'border-green-100', href:'/admin/students' },
+            { icon:'👨‍🏫', label:'Teachers',       value: teachers ?? 0, bg:'bg-sky-50',   text:'text-sky-700',   border:'border-sky-100',   href:'/admin/teachers' },
+            { icon:'📢', label:'Active Notices',  value: notices ?? 0,  bg:'bg-amber-50', text:'text-amber-700', border:'border-amber-100', href:'/admin/notices' },
+            { icon:'📰', label:'News Articles',   value: news ?? 0,     bg:'bg-purple-50',text:'text-purple-700',border:'border-purple-100',href:'/admin/news' },
           ].map(s => (
-            <div key={s.label} className={`${s.bg} ${s.border} border-2 rounded-2xl p-5`}>
+            <Link key={s.href} href={s.href}
+              className={`${s.bg} ${s.border} border-2 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-md transition-all`}>
               <div className="text-2xl mb-2">{s.icon}</div>
               <div className={`font-display text-3xl font-black ${s.text}`}>{s.value}</div>
               <div className="text-slate-500 text-xs font-semibold mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Management Links */}
-        <h2 className="font-display text-xl font-black text-slate-800 mb-4">Management</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { icon: '👨‍🏫', label: 'Teachers', href: '/admin/teachers', bg: 'bg-white', desc: 'Add/edit staff' },
-            { icon: '📢', label: 'Notices', href: '/admin/notices', bg: 'bg-white', desc: 'Post announcements' },
-            { icon: '📝', label: 'Exams', href: '/admin/exams', bg: 'bg-white', desc: 'Schedule exams' },
-            { icon: '📊', label: 'Results', href: '/admin/results', bg: 'bg-white', desc: 'Enter marks' },
-            { icon: '✅', label: 'Attendance', href: '/admin/attendance', bg: 'bg-white', desc: 'Daily attendance' },
-            { icon: '🏆', label: 'Achievements', href: '/admin/achievements', bg: 'bg-white', desc: 'Student awards' },
-            { icon: '🖼️', label: 'Gallery', href: '/admin/gallery', bg: 'bg-white', desc: 'School photos' },
-            { icon: '⚙️', label: 'Settings', href: '/admin/settings', bg: 'bg-white', desc: 'School info' },
-          ].map(m => (
-            <Link key={m.href} href={m.href}
-              className="bg-white border-2 border-slate-100 rounded-2xl p-4 hover:-translate-y-1 hover:shadow-md hover:border-green-200 transition-all group">
-              <div className="text-2xl mb-2">{m.icon}</div>
-              <div className="font-bold text-sm text-slate-800">{m.label}</div>
-              <div className="text-slate-400 text-xs mt-0.5">{m.desc}</div>
             </Link>
           ))}
         </div>
 
-        {/* Recent Registrations */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-          <h2 className="font-display text-lg font-black text-slate-800 mb-4">🆕 Recent Student Registrations</h2>
-          {recentStudents?.length ? (
+        {/* Quick Actions */}
+        <div>
+          <h2 className="font-display text-lg font-black text-slate-800 mb-3">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { icon:'➕', label:'Add Student',    href:'/admin/students' },
+              { icon:'📢', label:'Post Notice',    href:'/admin/notices' },
+              { icon:'📊', label:'Enter Results',  href:'/admin/results' },
+              { icon:'✅', label:'Mark Attendance',href:'/admin/attendance' },
+              { icon:'👨‍🏫', label:'Add Teacher',    href:'/admin/teachers' },
+              { icon:'📰', label:'Write News',     href:'/admin/news' },
+              { icon:'🏆', label:'Add Achievement',href:'/admin/achievements' },
+              { icon:'⚙️', label:'Settings',       href:'/admin/settings' },
+            ].map(a => (
+              <Link key={a.href} href={a.href}
+                className="bg-white border-2 border-slate-100 rounded-xl p-3 flex items-center gap-3 hover:border-green-200 hover:shadow-sm transition-all">
+                <span className="text-xl">{a.icon}</span>
+                <span className="text-sm font-bold text-slate-700">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Recent Registrations */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+            <h2 className="font-display text-lg font-black text-slate-800 mb-4">🆕 Recent Registrations</h2>
             <div className="space-y-2">
-              {recentStudents.map(s => (
-                <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-black">
-                      {s.full_name?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">{s.full_name}</p>
-                      <p className="text-xs text-slate-400">{new Date(s.created_at).toLocaleDateString()}</p>
-                    </div>
+              {recentStudents?.length ? recentStudents.map(s => (
+                <div key={s.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-black flex-shrink-0">
+                    {s.full_name?.[0]?.toUpperCase() || '?'}
                   </div>
-                  <span className="bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full border border-green-100">New</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{s.full_name}</p>
+                    <p className="text-xs text-slate-400">{new Date(s.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
-              ))}
+              )) : <p className="text-slate-400 text-sm text-center py-4">No students yet</p>}
             </div>
-          ) : (
-            <p className="text-slate-400 text-sm text-center py-6">No students registered yet</p>
-          )}
+          </div>
+
+          {/* Upcoming Exams */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-black text-slate-800">📝 Upcoming Exams</h2>
+              <Link href="/admin/exams" className="text-green-800 text-xs font-bold hover:underline">Manage →</Link>
+            </div>
+            <div className="space-y-2">
+              {exams?.length ? exams.map(ex => {
+                const days = Math.ceil((new Date(ex.start_date).getTime() - Date.now()) / 86400000)
+                return (
+                  <div key={ex.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{ex.name}</p>
+                      <p className="text-xs text-slate-400">{ex.start_date}</p>
+                    </div>
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${days <= 7 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                      {days > 0 ? `${days}d` : 'Today'}
+                    </span>
+                  </div>
+                )
+              }) : <p className="text-slate-400 text-sm text-center py-4">No upcoming exams</p>}
+            </div>
+            <Link href="/admin/exams"
+              className="mt-4 w-full block text-center bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-200 text-slate-600 hover:text-green-800 text-sm font-bold py-2.5 rounded-xl transition-all">
+              + Schedule Exam
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }
