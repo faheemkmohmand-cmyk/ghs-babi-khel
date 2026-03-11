@@ -1,187 +1,248 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import AdminLayout from '@/components/admin/AdminLayout'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
-type Result = { id: string; student_name: string; class: string; section: string; roll_no: string; exam_name: string; year: string; total_marks: number; obtained_marks: number; percentage: number; grade: string; result: string }
-
-function calcGrade(pct: number) {
-  if (pct >= 90) return 'A+'
-  if (pct >= 80) return 'A'
-  if (pct >= 70) return 'B'
-  if (pct >= 60) return 'C'
-  if (pct >= 50) return 'D'
+const CLASSES = ['6','7','8','9','10']
+const SUBJECTS_BY_CLASS: Record<string,string[]> = {
+  '6':['Urdu','English','Mathematics','General Science','Islamiat','Social Studies'],
+  '7':['Urdu','English','Mathematics','General Science','Islamiat','Social Studies'],
+  '8':['Urdu','English','Mathematics','General Science','Islamiat','Pakistan Studies'],
+  '9':['Urdu','English','Mathematics','Physics','Chemistry','Biology','Islamiat','Pakistan Studies'],
+  '10':['Urdu','English','Mathematics','Physics','Chemistry','Biology','Islamiat','Pakistan Studies'],
+}
+function getGrade(pct:number) {
+  if(pct>=90) return 'A+'
+  if(pct>=80) return 'A'
+  if(pct>=70) return 'B'
+  if(pct>=60) return 'C'
+  if(pct>=50) return 'D'
   return 'F'
 }
+type Student = { id:string; full_name:string; class:string; section:string; roll_no:string }
+type SubjectMark = { subject:string; total:number; obtained:number }
 
 export default function AdminResultsPage() {
-  const supabase = createClient()
-  const [results, setResults] = useState<Result[]>([])
+  const [selClass, setSelClass] = useState('9')
+  const [students, setStudents] = useState<Student[]>([])
+  const [selStudent, setSelStudent] = useState<Student|null>(null)
+  const [examName, setExamName] = useState('Annual Examination 2025')
+  const [year, setYear] = useState('2025')
+  const [marks, setMarks] = useState<SubjectMark[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [filterClass, setFilterClass] = useState('')
-  const [form, setForm] = useState({ student_name:'', class:'6', section:'A', roll_no:'', exam_name:'', year: new Date().getFullYear().toString(), total_marks:500, obtained_marks:0 })
+  const [profile, setProfile] = useState<{full_name:string}|null>(null)
+  const supabase = createClient()
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    let q = supabase.from('results').select('*').order('created_at', { ascending: false })
-    if (filterClass) q = q.eq('class', filterClass)
-    const { data } = await q
-    setResults(data || [])
-    setLoading(false)
-  }, [filterClass])
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href='/login'; return }
+      const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id',user.id).single()
+      if (!p||p.role!=='admin') { window.location.href='/dashboard'; return }
+      setProfile(p)
+      setLoading(false)
+    }
+    init()
+  }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    async function loadStudents() {
+      const { data } = await supabase.from('students').select('id,full_name,class,section,roll_no').eq('class',selClass).eq('status','active').order('roll_no')
+      setStudents(data||[])
+      setSelStudent(null)
+      setMarks([])
+    }
+    loadStudents()
+  }, [selClass])
 
-  const pct = form.total_marks > 0 ? Math.round((form.obtained_marks / form.total_marks) * 100) : 0
+  function selectStudent(s:Student) {
+    setSelStudent(s)
+    setMarks(SUBJECTS_BY_CLASS[s.class]?.map(sub=>({subject:sub,total:100,obtained:0}))||[])
+  }
 
-  async function save() {
-    if (!form.student_name || !form.exam_name || !form.roll_no) { toast.error('Fill required fields'); return }
+  const total = marks.reduce((a,m)=>a+m.total,0)
+  const obtained = marks.reduce((a,m)=>a+m.obtained,0)
+  const pct = total>0 ? Math.round((obtained/total)*100*100)/100 : 0
+  const grade = getGrade(pct)
+  const result = pct>=40?'Pass':'Fail'
+
+  async function handleSave() {
+    if (!selStudent) { toast.error('Select a student first'); return }
+    if (!examName) { toast.error('Enter exam name'); return }
+    if (marks.some(m=>m.obtained>m.total)) { toast.error('Obtained marks cannot exceed total marks'); return }
     setSaving(true)
-    const percentage = parseFloat(((form.obtained_marks / form.total_marks) * 100).toFixed(2))
-    const grade = calcGrade(percentage)
     try {
-      const { error } = await supabase.from('results').insert({
-        ...form, percentage, grade, result: percentage >= 40 ? 'Pass' : 'Fail', subjects: []
-      })
-      if (error) throw error
-      toast.success('Result saved!')
-      setShowForm(false); load()
-    } catch (e: any) { toast.error(e.message) }
-    finally { setSaving(false) }
+      const payload = {
+        student_id: selStudent.id,
+        student_name: selStudent.full_name,
+        class: selStudent.class,
+        section: selStudent.section,
+        roll_no: selStudent.roll_no,
+        exam_name: examName,
+        year,
+        subjects: marks,
+        total_marks: total,
+        obtained_marks: obtained,
+        percentage: pct,
+        grade,
+        result,
+      }
+      const { error } = await supabase.from('results').upsert(payload,{onConflict:'student_id,exam_name,year'})
+      if (error) { toast.error(error.message); return }
+      toast.success(`Result saved for ${selStudent.full_name} ✅`)
+    } finally { setSaving(false) }
   }
 
-  async function del(id: string) {
-    if (!confirm('Delete this result?')) return
-    await supabase.from('results').delete().eq('id', id)
-    toast.success('Deleted'); load()
-  }
-
-  const gradeColor: Record<string, string> = { 'A+':'bg-green-100 text-green-800', 'A':'bg-green-50 text-green-700', 'B':'bg-sky-50 text-sky-700', 'C':'bg-amber-50 text-amber-700', 'D':'bg-orange-50 text-orange-700', 'F':'bg-red-50 text-red-700' }
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="text-center"><div className="w-8 h-8 border-4 border-green-900 border-t-transparent rounded-full spinner mx-auto mb-3"/><p className="text-slate-500 font-semibold">Loading...</p></div>
+    </div>
+  )
 
   return (
-    <AdminLayout adminName="">
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-2xl font-black text-slate-800">📊 Results</h1>
-            <p className="text-slate-500 text-sm">{results.length} results entered</p>
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin" className="w-8 h-8 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-sm">🏫</Link>
+            <span className="text-slate-400 text-sm">/</span>
+            <span className="font-display font-bold text-slate-800 text-sm">Results</span>
           </div>
-          <button onClick={() => setShowForm(true)} className="bg-green-900 hover:bg-green-950 text-white font-bold px-4 py-2.5 rounded-xl text-sm">+ Add Result</button>
+          <div className="flex items-center gap-3">
+            <span className="text-slate-500 text-sm hidden sm:block">{profile?.full_name}</span>
+            <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">ADMIN</span>
+            <form action="/auth/signout" method="post">
+              <button type="submit" className="text-xs text-slate-400 hover:text-red-500 font-semibold border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">Sign Out</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-black text-slate-800">📊 Enter Results</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Select a student and enter marks</p>
+          </div>
+          <Link href="/admin" className="border-2 border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm hover:bg-slate-50 transition-all">← Admin</Link>
         </div>
 
-        <div className="flex gap-3">
-          <select value={filterClass} onChange={e => setFilterClass(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-green-400">
-            <option value="">All Classes</option>
-            {['6','7','8','9','10'].map(c => <option key={c} value={c}>Class {c}</option>)}
-          </select>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          {loading ? <div className="text-center py-16 text-slate-400">Loading...</div>
-          : results.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-5xl mb-3">📊</div>
-              <p className="text-slate-400 font-semibold">No results yet</p>
-              <button onClick={() => setShowForm(true)} className="mt-4 bg-green-900 text-white font-bold px-5 py-2 rounded-xl text-sm">Add First Result</button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>{['Student','Class','Roll','Exam','Year','Total','Obtained','%','Grade','Result','Action'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {results.map(r => (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">{r.student_name}</td>
-                      <td className="px-4 py-3"><span className="bg-green-50 text-green-700 font-bold text-xs px-2 py-1 rounded-lg">{r.class}{r.section}</span></td>
-                      <td className="px-4 py-3 text-slate-500">{r.roll_no}</td>
-                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{r.exam_name}</td>
-                      <td className="px-4 py-3 text-slate-500">{r.year}</td>
-                      <td className="px-4 py-3 text-slate-600">{r.total_marks}</td>
-                      <td className="px-4 py-3 font-bold text-slate-800">{r.obtained_marks}</td>
-                      <td className="px-4 py-3 font-bold text-slate-800">{r.percentage}%</td>
-                      <td className="px-4 py-3"><span className={`text-xs font-black px-2 py-1 rounded-lg ${gradeColor[r.grade]||'bg-slate-100 text-slate-600'}`}>{r.grade}</span></td>
-                      <td className="px-4 py-3"><span className={`text-xs font-bold px-2 py-1 rounded-full ${r.result==='Pass'?'bg-green-50 text-green-700':'bg-red-50 text-red-600'}`}>{r.result}</span></td>
-                      <td className="px-4 py-3"><button onClick={() => del(r.id)} className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50">Del</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.5)'}}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="font-display text-xl font-black text-slate-800 mb-5">Add Result</h2>
-            <div className="space-y-3">
-              {[
-                { label:'Student Name *', key:'student_name', placeholder:'Full name' },
-                { label:'Exam Name *', key:'exam_name', placeholder:'e.g. Annual Exam 2024' },
-                { label:'Roll Number *', key:'roll_no', placeholder:'e.g. 01' },
-                { label:'Year', key:'year', placeholder:'2024' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{f.label}</label>
-                  <input value={(form as any)[f.key]} onChange={e => setForm(p => ({...p, [f.key]: e.target.value}))} placeholder={f.placeholder}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400" />
-                </div>
-              ))}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label:'Class', key:'class', options:['6','7','8','9','10'] },
-                  { label:'Section', key:'section', options:['A','B','C'] },
-                ].map(f => (
-                  <div key={f.key}>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{f.label}</label>
-                    <select value={(form as any)[f.key]} onChange={e => setForm(p => ({...p, [f.key]: e.target.value}))}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400">
-                      {f.options.map(o => <option key={o} value={o}>{f.key==='class'?`Class ${o}`:o}</option>)}
-                    </select>
-                  </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left - student picker */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Class</label>
+              <div className="flex flex-wrap gap-1.5">
+                {CLASSES.map(c=>(
+                  <button key={c} onClick={()=>setSelClass(c)} className={`px-3 py-1.5 rounded-xl text-sm font-black border-2 transition-all ${selClass===c?'bg-slate-800 text-white border-slate-800':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>{c}</button>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Total Marks</label>
-                  <input type="number" min="1" value={form.total_marks} onChange={e => setForm(p => ({...p, total_marks: parseInt(e.target.value)||0}))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Obtained Marks</label>
-                  <input type="number" min="0" max={form.total_marks} value={form.obtained_marks} onChange={e => setForm(p => ({...p, obtained_marks: parseInt(e.target.value)||0}))}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400" />
-                </div>
-              </div>
-              {form.obtained_marks > 0 && (
-                <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-600">Preview:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-slate-800">{pct}%</span>
-                    <span className={`text-xs font-black px-2 py-1 rounded-lg ${gradeColor[calcGrade(pct)]||'bg-slate-100 text-slate-600'}`}>{calcGrade(pct)}</span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${pct>=40?'bg-green-50 text-green-700':'bg-red-50 text-red-600'}`}>{pct>=40?'Pass':'Fail'}</span>
-                  </div>
-                </div>
-              )}
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowForm(false)} className="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm hover:bg-slate-50">Cancel</button>
-              <button onClick={save} disabled={saving} className="flex-1 bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm">
-                {saving ? 'Saving...' : 'Save Result'}
-              </button>
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="p-3 border-b border-slate-50">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Students — Class {selClass}</p>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {students.length===0 ? (
+                  <p className="text-slate-400 text-sm text-center py-8">No students in Class {selClass}</p>
+                ) : students.map(s=>(
+                  <button key={s.id} onClick={()=>selectStudent(s)}
+                    className={`w-full text-left px-4 py-3 border-b border-slate-50 transition-colors hover:bg-slate-50 ${selStudent?.id===s.id?'bg-green-50 border-l-4 border-l-green-900':''}`}>
+                    <p className="font-bold text-slate-800 text-sm">{s.full_name}</p>
+                    <p className="text-xs text-slate-400">Roll {s.roll_no} · {s.class}{s.section}</p>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* Right - marks entry */}
+          <div className="lg:col-span-2">
+            {!selStudent ? (
+              <div className="bg-white rounded-2xl border border-dashed border-slate-200 h-80 flex items-center justify-center">
+                <div className="text-center"><div className="text-4xl mb-2">👈</div><p className="text-slate-400 font-semibold">Select a student to enter marks</p></div>
+              </div>
+            ) : (
+              <>
+                <div className="bg-white rounded-2xl border border-slate-100 p-5 mb-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-white font-black">{selStudent.full_name?.[0]}</div>
+                    <div>
+                      <p className="font-black text-slate-800">{selStudent.full_name}</p>
+                      <p className="text-xs text-slate-400">Class {selStudent.class}{selStudent.section} · Roll {selStudent.roll_no}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Exam Name</label>
+                      <input value={examName} onChange={e=>setExamName(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-green-500 transition-colors"/>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Year</label>
+                      <input value={year} onChange={e=>setYear(e.target.value)} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-green-500 transition-colors"/>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-slate-800 text-white">
+                        <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest">Subject</th>
+                        <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-widest w-24">Total</th>
+                        <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-widest w-24">Obtained</th>
+                        <th className="px-4 py-3 text-center text-xs font-black uppercase tracking-widest w-16">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {marks.map((m,i)=>{
+                        const subPct = m.total>0?Math.round((m.obtained/m.total)*100):0
+                        return (
+                          <tr key={m.subject} className={`border-t border-slate-50 ${i%2===0?'':'bg-slate-50/40'}`}>
+                            <td className="px-4 py-2.5 font-bold text-slate-700 text-sm">{m.subject}</td>
+                            <td className="px-4 py-2.5 text-center">
+                              <input type="number" min={0} max={200} value={m.total} onChange={e=>setMarks(prev=>prev.map((x,j)=>j===i?{...x,total:Number(e.target.value)}:x))}
+                                className="w-16 border-2 border-slate-200 rounded-lg px-2 py-1 text-sm text-center outline-none focus:border-green-500 transition-colors"/>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <input type="number" min={0} max={m.total} value={m.obtained} onChange={e=>setMarks(prev=>prev.map((x,j)=>j===i?{...x,obtained:Number(e.target.value)}:x))}
+                                className={`w-16 border-2 rounded-lg px-2 py-1 text-sm text-center outline-none transition-colors ${m.obtained>m.total?'border-red-400 bg-red-50':'border-slate-200 focus:border-green-500'}`}/>
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <span className={`text-sm font-black ${subPct>=50?'text-green-700':'text-red-600'}`}>{subPct}%</span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Result preview */}
+                <div className={`rounded-2xl border-2 p-5 mb-4 flex items-center justify-between flex-wrap gap-4 ${result==='Pass'?'bg-green-50 border-green-200':'bg-red-50 border-red-200'}`}>
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl">{result==='Pass'?'🏆':'📚'}</span>
+                    <div>
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Result Preview</p>
+                      <p className="font-display text-xl font-black text-slate-800">{obtained}/{total} · {pct}%</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className={`text-center px-4 py-2 rounded-xl font-black text-lg ${result==='Pass'?'bg-green-900 text-white':'bg-red-500 text-white'}`}>{grade}</div>
+                    <div className={`text-center px-4 py-2 rounded-xl font-black text-sm ${result==='Pass'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{result}</div>
+                  </div>
+                </div>
+
+                <button onClick={handleSave} disabled={saving} className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md text-base">
+                  {saving&&<span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full spinner"/>}
+                  💾 Save Result for {selStudent.full_name}
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      )}
-    </AdminLayout>
+      </div>
+    </div>
   )
 }

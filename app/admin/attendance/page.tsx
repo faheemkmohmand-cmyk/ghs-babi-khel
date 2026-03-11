@@ -1,167 +1,208 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import AdminLayout from '@/components/admin/AdminLayout'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
-type Student = { id: string; full_name: string; roll_no: string; class: string; section: string }
-type AttendanceRecord = { student_id: string; status: string }
+const CLASSES = ['6','7','8','9','10']
+const SECTIONS = ['A','B','C']
+type Student = { id:string; full_name:string; roll_no:string }
+type AttRow = { student_id:string; status:'present'|'absent'|'late'|'leave' }
+const statusStyles: Record<string,string> = {
+  present:'bg-green-900 text-white border-green-900',
+  absent:'bg-red-500 text-white border-red-500',
+  late:'bg-amber-500 text-white border-amber-500',
+  leave:'bg-sky-500 text-white border-sky-500',
+}
 
 export default function AdminAttendancePage() {
-  const supabase = createClient()
-  const [students, setStudents] = useState<Student[]>([])
-  const [attendance, setAttendance] = useState<Record<string, string>>({})
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [selClass, setSelClass] = useState('6')
+  const [selClass, setSelClass] = useState('9')
   const [selSection, setSelSection] = useState('A')
-  const [loading, setLoading] = useState(false)
+  const [selDate, setSelDate] = useState(new Date().toISOString().split('T')[0])
+  const [students, setStudents] = useState<Student[]>([])
+  const [rows, setRows] = useState<AttRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [fetching, setFetching] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [profile, setProfile] = useState<{full_name:string}|null>(null)
+  const supabase = createClient()
 
-  const loadStudents = useCallback(async () => {
-    setLoading(true)
-    const { data } = await supabase.from('students').select('id,full_name,roll_no,class,section')
-      .eq('class', selClass).eq('section', selSection).eq('status','active').order('roll_no')
-    setStudents(data || [])
-
-    // Load existing attendance for this date
-    const ids = (data || []).map((s: Student) => s.id)
-    if (ids.length > 0) {
-      const { data: att } = await supabase.from('attendance').select('student_id,status').eq('date', date).in('student_id', ids)
-      const map: Record<string, string> = {}
-      ;(data || []).forEach((s: Student) => { map[s.id] = 'present' })
-      ;(att || []).forEach((a: AttendanceRecord) => { map[a.student_id] = a.status })
-      setAttendance(map)
-    } else {
-      setAttendance({})
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href='/login'; return }
+      const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id',user.id).single()
+      if (!p||p.role!=='admin') { window.location.href='/dashboard'; return }
+      setProfile(p)
+      setLoading(false)
     }
-    setLoading(false)
-  }, [selClass, selSection, date])
+    init()
+  }, [])
 
-  useEffect(() => { loadStudents() }, [loadStudents])
-
-  function setStatus(id: string, status: string) {
-    setAttendance(p => ({ ...p, [id]: status }))
+  async function loadAttendance() {
+    setFetching(true)
+    setLoaded(false)
+    const { data: studs } = await supabase.from('students').select('id,full_name,roll_no').eq('class',selClass).eq('section',selSection).eq('status','active').order('roll_no')
+    const { data: existing } = await supabase.from('attendance').select('student_id,status').eq('date',selDate).eq('class',selClass).eq('section',selSection)
+    const existingMap = new Map((existing||[]).map(r=>[r.student_id,r.status]))
+    setStudents(studs||[])
+    setRows((studs||[]).map(s=>({ student_id:s.id, status:(existingMap.get(s.id)||'present') as any })))
+    setLoaded(true)
+    setFetching(false)
   }
 
-  function markAll(status: string) {
-    const map: Record<string, string> = {}
-    students.forEach(s => { map[s.id] = status })
-    setAttendance(map)
+  function setStatus(studentId:string, status:'present'|'absent'|'late'|'leave') {
+    setRows(prev=>prev.map(r=>r.student_id===studentId?{...r,status}:r))
   }
 
-  async function saveAttendance() {
-    if (students.length === 0) { toast.error('No students found'); return }
+  function markAll(status:'present'|'absent') {
+    setRows(prev=>prev.map(r=>({...r,status})))
+  }
+
+  async function handleSave() {
+    if (!loaded||rows.length===0) { toast.error('Load students first'); return }
     setSaving(true)
     try {
-      const records = students.map(s => ({
-        student_id: s.id, date, status: attendance[s.id] || 'present',
-        class: selClass, section: selSection
-      }))
-      const { error } = await supabase.from('attendance').upsert(records, { onConflict: 'student_id,date' })
-      if (error) throw error
-      toast.success(`Attendance saved for ${students.length} students!`)
-    } catch (e: any) { toast.error(e.message) }
-    finally { setSaving(false) }
+      const records = rows.map(r=>({ student_id:r.student_id, date:selDate, status:r.status, class:selClass, section:selSection }))
+      const { error } = await supabase.from('attendance').upsert(records,{onConflict:'student_id,date'})
+      if (error) { toast.error(error.message); return }
+      toast.success(`Attendance saved for ${rows.length} students ✅`)
+    } finally { setSaving(false) }
   }
 
-  const statusColor: Record<string, string> = { present:'bg-green-500', absent:'bg-red-500', late:'bg-amber-500', leave:'bg-sky-500' }
-  const statusBg: Record<string, string> = { present:'bg-green-50 border-green-300 text-green-700', absent:'bg-red-50 border-red-300 text-red-700', late:'bg-amber-50 border-amber-300 text-amber-700', leave:'bg-sky-50 border-sky-300 text-sky-700' }
+  const counts = { present:rows.filter(r=>r.status==='present').length, absent:rows.filter(r=>r.status==='absent').length, late:rows.filter(r=>r.status==='late').length, leave:rows.filter(r=>r.status==='leave').length }
 
-  const presentCount = Object.values(attendance).filter(v => v === 'present').length
-  const absentCount = Object.values(attendance).filter(v => v === 'absent').length
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="text-center"><div className="w-8 h-8 border-4 border-green-900 border-t-transparent rounded-full spinner mx-auto mb-3"/><p className="text-slate-500 font-semibold">Loading...</p></div>
+    </div>
+  )
 
   return (
-    <AdminLayout adminName="">
-      <div className="space-y-5">
-        <div>
-          <h1 className="font-display text-2xl font-black text-slate-800">✅ Attendance</h1>
-          <p className="text-slate-500 text-sm">Mark daily attendance for each class</p>
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin" className="w-8 h-8 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-sm">🏫</Link>
+            <span className="text-slate-400 text-sm">/</span>
+            <span className="font-display font-bold text-slate-800 text-sm">Attendance</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-slate-500 text-sm hidden sm:block">{profile?.full_name}</span>
+            <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full">ADMIN</span>
+            <form action="/auth/signout" method="post">
+              <button type="submit" className="text-xs text-slate-400 hover:text-red-500 font-semibold border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">Sign Out</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-black text-slate-800">✅ Daily Attendance</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Mark attendance for any class and date</p>
+          </div>
+          <Link href="/admin" className="border-2 border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm hover:bg-slate-50 transition-all">← Admin</Link>
         </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <div className="flex flex-wrap gap-3 items-end">
+        {/* Selector */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 mb-5">
+          <div className="flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Date</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Class</label>
-              <select value={selClass} onChange={e => setSelClass(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400">
-                {['6','7','8','9','10'].map(c => <option key={c} value={c}>Class {c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Section</label>
-              <select value={selSection} onChange={e => setSelSection(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400">
-                {['A','B','C'].map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {students.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2 items-center">
-              <span className="text-sm font-bold text-slate-600">Mark All:</span>
-              {['present','absent','late','leave'].map(s => (
-                <button key={s} onClick={() => markAll(s)}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border-2 transition-all ${statusBg[s]}`}>
-                  {s.charAt(0).toUpperCase()+s.slice(1)}
-                </button>
-              ))}
-              <div className="ml-auto flex gap-3 text-sm">
-                <span className="font-bold text-green-700">✅ {presentCount} Present</span>
-                <span className="font-bold text-red-600">❌ {absentCount} Absent</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Student List */}
-        {loading ? <div className="text-center py-16 text-slate-400">Loading students...</div>
-        : students.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 text-center py-16">
-            <div className="text-5xl mb-3">🎓</div>
-            <p className="text-slate-400 font-semibold">No students in Class {selClass}{selSection}</p>
-            <p className="text-slate-400 text-sm mt-1">Add students first from the Students section</p>
-          </div>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="divide-y divide-slate-50">
-                {students.map((s, i) => (
-                  <div key={s.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors">
-                    <span className="text-slate-400 text-sm font-bold w-8">{i+1}</span>
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-black flex-shrink-0">
-                      {s.full_name?.[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-slate-800 text-sm">{s.full_name}</p>
-                      <p className="text-slate-400 text-xs">Roll No: {s.roll_no}</p>
-                    </div>
-                    <div className="flex gap-1.5">
-                      {['present','absent','late','leave'].map(status => (
-                        <button key={status} onClick={() => setStatus(s.id, status)}
-                          className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border-2 transition-all ${
-                            attendance[s.id] === status ? statusBg[status] + ' scale-105' : 'border-slate-100 text-slate-400 hover:border-slate-200'
-                          }`}>
-                          {status.charAt(0).toUpperCase()+status.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Class</label>
+              <div className="flex gap-1.5">
+                {CLASSES.map(c=>(
+                  <button key={c} onClick={()=>{setSelClass(c);setLoaded(false)}} className={`px-3 py-1.5 rounded-xl text-sm font-black border-2 transition-all ${selClass===c?'bg-slate-800 text-white border-slate-800':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>{c}</button>
                 ))}
               </div>
             </div>
-            <button onClick={saveAttendance} disabled={saving}
-              className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm shadow-md transition-all">
-              {saving ? 'Saving Attendance...' : `💾 Save Attendance for Class ${selClass}${selSection} — ${date}`}
+            <div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Section</label>
+              <div className="flex gap-1.5">
+                {SECTIONS.map(s=>(
+                  <button key={s} onClick={()=>{setSelSection(s);setLoaded(false)}} className={`px-3 py-1.5 rounded-xl text-sm font-black border-2 transition-all ${selSection===s?'bg-green-900 text-white border-green-900':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>{s}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Date</label>
+              <input type="date" value={selDate} onChange={e=>{setSelDate(e.target.value);setLoaded(false)}} className="border-2 border-slate-200 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-green-500 transition-colors"/>
+            </div>
+            <button onClick={loadAttendance} disabled={fetching} className="bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-bold px-5 py-2 rounded-xl text-sm flex items-center gap-2 transition-all">
+              {fetching?<span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner"/>:null}
+              {fetching?'Loading...':'Load Students'}
             </button>
-          </>
+          </div>
+        </div>
+
+        {/* Stats */}
+        {loaded&&rows.length>0&&(
+          <div className="grid grid-cols-4 gap-3 mb-5">
+            {[{l:'Present',n:counts.present,cls:'bg-green-50 border-green-200 text-green-700'},{l:'Absent',n:counts.absent,cls:'bg-red-50 border-red-200 text-red-600'},{l:'Late',n:counts.late,cls:'bg-amber-50 border-amber-200 text-amber-700'},{l:'Leave',n:counts.leave,cls:'bg-sky-50 border-sky-200 text-sky-700'}].map(s=>(
+              <div key={s.l} className={`${s.cls} border-2 rounded-2xl p-4 text-center`}>
+                <div className="font-display text-2xl font-black">{s.n}</div>
+                <div className="text-xs font-bold mt-0.5">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Mark all */}
+        {loaded&&rows.length>0&&(
+          <div className="flex gap-2 mb-4">
+            <button onClick={()=>markAll('present')} className="bg-green-50 hover:bg-green-100 text-green-700 font-bold text-sm px-4 py-2 rounded-xl border-2 border-green-200 transition-colors">✅ Mark All Present</button>
+            <button onClick={()=>markAll('absent')} className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm px-4 py-2 rounded-xl border-2 border-red-200 transition-colors">❌ Mark All Absent</button>
+          </div>
+        )}
+
+        {/* Student list */}
+        {loaded&&(
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm mb-5">
+            {rows.length===0 ? (
+              <div className="p-12 text-center"><div className="text-4xl mb-2">🎓</div><p className="text-slate-400 font-semibold">No active students found in Class {selClass}{selSection}</p></div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-800 text-white">
+                    <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest w-12">Roll</th>
+                    <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest">Student Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-widest">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row,i)=>{
+                    const student = students.find(s=>s.id===row.student_id)
+                    return (
+                      <tr key={row.student_id} className={`border-t border-slate-50 ${i%2===0?'':'bg-slate-50/40'}`}>
+                        <td className="px-4 py-3 text-sm font-black text-slate-500">{student?.roll_no||i+1}</td>
+                        <td className="px-4 py-3 font-bold text-slate-800 text-sm">{student?.full_name||'—'}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5">
+                            {(['present','absent','late','leave'] as const).map(st=>(
+                              <button key={st} onClick={()=>setStatus(row.student_id,st)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all capitalize ${row.status===st?statusStyles[st]:'bg-white text-slate-400 border-slate-200 hover:border-slate-400'}`}>
+                                {st}
+                              </button>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {loaded&&rows.length>0&&(
+          <button onClick={handleSave} disabled={saving} className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md text-base">
+            {saving&&<span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full spinner"/>}
+            💾 Save Attendance for {rows.length} Students
+          </button>
         )}
       </div>
-    </AdminLayout>
+    </div>
   )
 }

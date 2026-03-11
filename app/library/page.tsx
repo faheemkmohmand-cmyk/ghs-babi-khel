@@ -7,7 +7,7 @@ export default async function LibraryPage() {
 
   const typeColor: Record<string,string> = { textbook:'bg-green-50 text-green-700 border-green-100', reference:'bg-sky-50 text-sky-700 border-sky-100', guide:'bg-purple-50 text-purple-700 border-purple-100' }
 
-  const byClass = [...new Set((books||[]).map(b => b.class))].sort()
+  const byClass = Array.from(new Set((books||[]).map(b => b.class) as string[])).sort()
 
   return (
     <div className="min-h-screen bg-slate-50">
