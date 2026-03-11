@@ -1,0 +1,118 @@
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import toast from 'react-hot-toast'
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email || !password) { toast.error('Please fill all fields'); return }
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { toast.error('Wrong email or password. Try again.'); return }
+      const { data: profile } = await supabase
+        .from('profiles').select('role,full_name').eq('id', data.user.id).single()
+      toast.success(`Welcome back, ${profile?.full_name || 'User'}! 👋`)
+      router.refresh()
+      setTimeout(() => {
+        router.push(profile?.role === 'admin' ? '/admin' : '/dashboard')
+      }, 500)
+    } catch { toast.error('Something went wrong. Please try again.') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="min-h-screen flex" style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
+      {/* Left panel - branding */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none"
+          style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.04) 1px,transparent 1px)',backgroundSize:'50px 50px'}} />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-green-900/15 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="relative z-10 text-center max-w-sm">
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl ring-8 ring-green-400/10">🏫</div>
+          <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
+          <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 1989</p>
+          <div className="grid grid-cols-2 gap-3 text-left">
+            {[
+              {icon:'🎓',label:'Student Results','sub':'Check your marks'},
+              {icon:'✅',label:'Attendance','sub':'View your record'},
+              {icon:'📅',label:'Timetable','sub':'Class schedule'},
+              {icon:'📢',label:'Notices','sub':'School updates'},
+            ].map(f=>(
+              <div key={f.label} className="bg-white/5 border border-white/8 rounded-2xl p-3">
+                <div className="text-xl mb-1">{f.icon}</div>
+                <div className="text-white text-sm font-bold">{f.label}</div>
+                <div className="text-white/35 text-xs">{f.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel - form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
+        <div className="w-full max-w-md animate-fade-up">
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>
+            <div className="font-display text-xl font-black text-white">GHS Babi Khel</div>
+          </div>
+
+          <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
+            <h2 className="font-display text-2xl font-black text-white mb-1">Sign In</h2>
+            <p className="text-white/40 text-sm mb-7">Access your school portal</p>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                  placeholder="you@email.com" autoComplete="email"
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all" />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
+                <div className="relative">
+                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                    placeholder="Your password" autoComplete="current-password"
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all" />
+                  <button type="button" onClick={()=>setShowPass(v=>!v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors text-sm">
+                    {showPass?'Hide':'Show'}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-2">
+                {loading
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner" />Signing in...</>
+                  : <><span>🚀</span>Sign In</>}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-5 border-t border-white/8 space-y-3 text-center text-sm">
+              <p className="text-white/35">
+                No account?{' '}
+                <Link href="/signup" className="text-green-400 font-bold hover:text-green-300 transition-colors">Create one →</Link>
+              </p>
+              <Link href="/" className="block text-white/20 text-xs hover:text-white/40 transition-colors">← Back to School Website</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
