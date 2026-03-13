@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -9,8 +8,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
-  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -18,21 +15,24 @@ export default function LoginPage() {
     if (!email || !password) { setError('Please fill all fields'); return }
     setLoading(true)
     try {
+      const supabase = createClient()
       const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (loginError) {
         setError('Login failed: ' + loginError.message)
+        setLoading(false)
         return
       }
 
+      // Get role then hard redirect
       const { data: profile } = await supabase
-        .from('profiles').select('role,full_name').eq('id', data.user.id).single()
+        .from('profiles').select('role').eq('id', data.user.id).single()
 
-      router.refresh()
-      router.push(profile?.role === 'admin' ? '/admin' : '/dashboard')
+      const dest = profile?.role === 'admin' ? '/admin' : '/dashboard'
+      window.location.href = dest
+
     } catch (e: any) {
-      setError('Exception: ' + e.message)
-    } finally {
+      setError('Error: ' + e.message)
       setLoading(false)
     }
   }
@@ -70,7 +70,7 @@ export default function LoginPage() {
             </div>
             <button type="submit" disabled={loading}
               className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-all">
-              {loading ? 'Signing in...' : '🚀 Sign In'}
+              {loading ? '⏳ Signing in...' : '🚀 Sign In'}
             </button>
           </form>
 
