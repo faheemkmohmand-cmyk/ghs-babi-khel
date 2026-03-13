@@ -42,6 +42,8 @@ export default async function HomePage() {
             {[
               ['About', '/about'],
               ['Teachers', '/teachers'],
+              ['News', '/news'],
+              ['Gallery', '/gallery'],
               ['Notices', '/notices'],
               ['Results', '/results'],
               ['Library', '/library'],
@@ -139,12 +141,14 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { icon:'📊', label:'Results',    href:'/results',     bg:'bg-green-50',   border:'border-green-100',  text:'text-green-700' },
+            { icon:'📊', label:'Results',     href:'/results',      bg:'bg-green-50',   border:'border-green-100',  text:'text-green-700'  },
             { icon:'📅', label:'Timetable',  href:'/timetable',   bg:'bg-sky-50',     border:'border-sky-100',    text:'text-sky-700'   },
             { icon:'✅', label:'Attendance', href:'/attendance',  bg:'bg-purple-50',  border:'border-purple-100', text:'text-purple-700'},
             { icon:'📢', label:'Notices',    href:'/notices',     bg:'bg-amber-50',   border:'border-amber-100',  text:'text-amber-700' },
             { icon:'📚', label:'Library',    href:'/library',     bg:'bg-rose-50',    border:'border-rose-100',   text:'text-rose-700'  },
-            { icon:'🏆', label:'Achievements',href:'/achievements',bg:'bg-indigo-50', border:'border-indigo-100', text:'text-indigo-700'},
+            { icon:'🏆', label:'Achievements',href:'/achievements', bg:'bg-indigo-50',  border:'border-indigo-100', text:'text-indigo-700'},
+            { icon:'🖼️', label:'Gallery',     href:'/gallery',      bg:'bg-pink-50',    border:'border-pink-100',   text:'text-pink-700'  },
+            { icon:'📰', label:'News',        href:'/news',         bg:'bg-blue-50',    border:'border-blue-100',   text:'text-blue-700'  },
           ].map(q => (
             <Link key={q.href} href={q.href}
               className={`${q.bg} ${q.border} border-2 rounded-2xl p-4 text-center hover:-translate-y-1 hover:shadow-lg transition-all group`}>
@@ -215,7 +219,7 @@ export default async function HomePage() {
             <div>
               <h4 className="font-bold text-sm text-white/60 uppercase tracking-widest mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {[['About School','/about'],['Our Teachers','/teachers'],['Notice Board','/notices'],['Results','/results']].map(([l,h])=>(
+                {[['About School','/about'],['Our Teachers','/teachers'],['Notice Board','/notices'],['Results','/results'],['Gallery','/gallery'],['News','/news'],['Library','/library'],['Achievements','/achievements']].map(([l,h])=>(
                   <Link key={h} href={h} className="block text-white/50 hover:text-white text-sm transition-colors">{l}</Link>
                 ))}
               </div>
