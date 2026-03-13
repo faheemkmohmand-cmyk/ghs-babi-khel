@@ -7,9 +7,17 @@ export default async function HomePage() {
     .from('school_settings').select('*').single()
 
   const schoolName = settings?.school_name || 'Government High School Babi Khel'
+  const shortName = settings?.short_name || 'GHS Babi Khel'
   const principal = settings?.principal_name || ''
   const totalStudents = settings?.total_students || 450
   const totalTeachers = settings?.total_teachers || 18
+  const totalClasses = settings?.total_classes || 5
+  const yearsOfExcellence = settings?.years_of_excellence || 35
+  const logoUrl = settings?.logo_url || ''
+  const bannerUrl = settings?.banner_url || ''
+  const bannerTitle = settings?.banner_title || 'Welcome to GHS Babi Khel'
+  const bannerSubtitle = settings?.banner_subtitle || 'Providing quality education since 1989'
+  const showBanner = settings?.show_banner || false
 
   const { data: notices } = await supabase
     .from('notices')
@@ -31,9 +39,11 @@ export default async function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-navy-900/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-lg shadow-lg">🏫</div>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-lg shadow-lg overflow-hidden">
+                {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover"/> : <span>🏫</span>}
+              </div>
             <div>
-              <div className="font-display font-bold text-white text-sm leading-none">GHS Babi Khel</div>
+              <div className="font-display font-bold text-white text-sm leading-none">{shortName}</div>
               <div className="text-green-400 text-xs font-semibold">Khyber Pakhtunkhwa</div>
             </div>
           </Link>
@@ -110,11 +120,11 @@ export default async function HomePage() {
             {/* Right stats */}
             <div className="grid grid-cols-2 gap-4 animate-fade-up" style={{animationDelay:'0.15s'}}>
               {[
-                { num: `${totalStudents}+`, label: 'Students Enrolled', icon: '🎓', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: `${totalTeachers}+`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-sky-950/80 to-sky-900/40', border: 'border-sky-400/20' },
-                { num: '12+', label: 'Classes Running', icon: '📚', color: 'from-purple-950/80 to-purple-900/40', border: 'border-purple-400/20' },
-                { num: '35+', label: 'Years of Excellence', icon: '🏆', color: 'from-amber-950/80 to-amber-900/40', border: 'border-amber-400/20' },
-              ].map(s => (
+                { num: \`\${totalStudents}+\`, label: 'Students Enrolled', icon: '🎓', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: \`\${totalTeachers}+\`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: \`\${totalClasses}\`, label: 'Classes Running', icon: '🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: \`\${yearsOfExcellence}+\`, label: 'Years of Excellence', icon: '🏆', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                ].map(s => (
                 <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-3xl p-5 backdrop-blur-sm`}>
                   <div className="text-3xl mb-2">{s.icon}</div>
                   <div className="font-display text-3xl font-black text-white">{s.num}</div>
@@ -132,6 +142,19 @@ export default async function HomePage() {
           </svg>
         </div>
       </section>
+
+
+      {/* ── SCHOOL BANNER (admin controlled) ── */}
+      {showBanner && bannerUrl && (
+        <section className="relative w-full overflow-hidden" style={{height:'320px'}}>
+          <img src={bannerUrl} alt="School Banner" className="w-full h-full object-cover"/>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4"
+            style={{background:'linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3), rgba(0,0,0,0.5))'}}>
+            <h2 className="font-display text-3xl md:text-5xl font-black mb-3 drop-shadow-lg">{bannerTitle}</h2>
+            <p className="text-white/80 text-lg md:text-xl drop-shadow-md">{bannerSubtitle}</p>
+          </div>
+        </section>
+      )}
 
       {/* ── QUICK LINKS ── */}
       <section className="max-w-7xl mx-auto px-4 py-16">
