@@ -120,10 +120,10 @@ export default async function HomePage() {
             {/* Right stats */}
             <div className="grid grid-cols-2 gap-4 animate-fade-up" style={{animationDelay:'0.15s'}}>
               {[
-                { num: \`\${totalStudents}+\`, label: 'Students Enrolled', icon: '🎓', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: \`\${totalTeachers}+\`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: \`\${totalClasses}\`, label: 'Classes Running', icon: '🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: \`\${yearsOfExcellence}+\`, label: 'Years of Excellence', icon: '🏆', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: `${totalStudents}+`, label: 'Students Enrolled', icon: '🎓', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: `${totalTeachers}+`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: `${totalClasses}`, label: 'Classes Running', icon: '🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
+                { num: `${yearsOfExcellence}+`, label: 'Years of Excellence', icon: '🏆', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
                 ].map(s => (
                 <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-3xl p-5 backdrop-blur-sm`}>
                   <div className="text-3xl mb-2">{s.icon}</div>
