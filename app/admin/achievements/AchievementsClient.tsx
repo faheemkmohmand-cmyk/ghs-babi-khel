@@ -159,18 +159,26 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
                 </label>
               </div>
 
-              {[
-                {k:'title',l:'Achievement Title *',ph:'e.g. First Position in District Science Olympiad'},
-                {k:'student_name',l:'Student Name *',ph:'Full name'},
-                {k:'class',l:'Class',ph:'e.g. 10, 9A'},
-                {k:'prize',l:'Prize / Award',ph:'Gold Medal, Certificate, Trophy...'},
-              ].map(f=>(
-                <div key={f.k}>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">{f.l}</label>
-                  <input value={(form as any)[f.k]} onChange={e=>setForm(p=>({...p,[f.k]:e.target.value}))} placeholder={f.ph}
-                    className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Achievement Title *</label>
+                <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder="e.g. First Position in District Science Olympiad"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Student Name *</label>
+                <input value={form.student_name} onChange={e=>setForm(p=>({...p,student_name:e.target.value}))} placeholder="Full name"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Class</label>
+                <input value={form.class} onChange={e=>setForm(p=>({...p,class:e.target.value}))} placeholder="e.g. 10, 9A"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Prize / Award</label>
+                <input value={form.prize} onChange={e=>setForm(p=>({...p,prize:e.target.value}))} placeholder="Gold Medal, Certificate, Trophy..."
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
 
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Description</label>

@@ -217,13 +217,31 @@ export default function LibraryClient({ books:initBooks, issues:initIssues, stud
               <button onClick={()=>setShowBookModal(false)} className="w-9 h-9 rounded-xl hover:bg-slate-100 flex items-center justify-center text-xl font-bold">×</button>
             </div>
             <div className="p-6 space-y-4">
-              {[{k:'title',l:'Book Title *',ph:'Full book title'},{k:'author',l:'Author *',ph:'Author name'},{k:'isbn',l:'ISBN (Optional)',ph:'978-...'},{k:'description',l:'Description',ph:'Short description...'},{k:'added_year',l:'Year Added',ph:'2024'}].map(f=>(
-                <div key={f.k}>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">{f.l}</label>
-                  <input value={(bookForm as any)[f.k]} onChange={e=>setBookForm(p=>({...p,[f.k]:e.target.value}))} placeholder={f.ph}
-                    className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Book Title *</label>
+                <input value={bookForm.title} onChange={e=>setBookForm(p=>({...p,title:e.target.value}))} placeholder="Full book title"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Author *</label>
+                <input value={bookForm.author} onChange={e=>setBookForm(p=>({...p,author:e.target.value}))} placeholder="Author name"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">ISBN (Optional)</label>
+                <input value={bookForm.isbn} onChange={e=>setBookForm(p=>({...p,isbn:e.target.value}))} placeholder="978-..."
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Description</label>
+                <input value={bookForm.description} onChange={e=>setBookForm(p=>({...p,description:e.target.value}))} placeholder="Short description..."
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Year Added</label>
+                <input value={bookForm.added_year} onChange={e=>setBookForm(p=>({...p,added_year:e.target.value}))} placeholder="2024"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Subject</label>
