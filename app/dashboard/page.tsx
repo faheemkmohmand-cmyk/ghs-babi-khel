@@ -17,14 +17,12 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
-
       const [{ data: profile }, { data: student }, { data: notices }, { data: exams }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('students').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('notices').select('id,title,type,date,important').eq('published', true).order('date', { ascending: false }).limit(5),
         supabase.from('exams').select('id,name,start_date,status').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(4),
       ])
-
       setProfile(profile)
       setStudent(student)
       setNotices(notices || [])
@@ -38,6 +36,10 @@ export default function DashboardPage() {
   const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening'
   const now = new Date()
 
+  // Display name: full_name from profile, else extract name from email
+  const displayName = profile?.full_name
+    || (user?.email ? user.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Student')
+
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="text-center">
@@ -49,16 +51,17 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Navbar */}
       <nav className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-base" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>🏫</div>
             <span className="font-bold text-slate-800 text-sm" style={{fontFamily:'Georgia,serif'}}>GHS Babi Khel</span>
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-slate-500 text-sm hidden sm:block">{profile?.full_name}</span>
+            <span className="text-slate-500 text-sm hidden sm:block">{displayName}</span>
             <div className="w-8 h-8 rounded-full bg-green-900 flex items-center justify-center text-white text-xs font-black">
-              {profile?.full_name?.[0]?.toUpperCase() || '?'}
+              {displayName[0]?.toUpperCase()}
             </div>
             <form action="/auth/signout" method="post">
               <button type="submit" className="text-xs text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 font-semibold px-3 py-1.5 rounded-lg transition-all">
@@ -69,45 +72,63 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* Welcome */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* Welcome Banner */}
         <div className="rounded-3xl p-6 md:p-8 text-white mb-7 relative overflow-hidden" style={{background:'linear-gradient(135deg,#0a1628,#014d26)'}}>
-          <div className="absolute right-4 text-8xl opacity-5 top-0 bottom-0 flex items-center pointer-events-none">🎓</div>
+          <div className="absolute right-4 text-8xl opacity-5 top-0 bottom-0 flex items-center pointer-events-none select-none">🎓</div>
           <p className="text-white/50 text-sm mb-0.5">{greeting} 👋</p>
-          <h1 className="text-2xl md:text-3xl font-black mb-1" style={{fontFamily:'Georgia,serif'}}>
-            {profile?.full_name || user?.email}
-          </h1>
-          {student ? (
+          <h1 className="text-2xl md:text-3xl font-black mb-1" style={{fontFamily:'Georgia,serif'}}>{displayName}</h1>
+          <p className="text-white/40 text-sm">Welcome to GHS Babi Khel Student Portal</p>
+          {student && (
             <div className="flex flex-wrap gap-3 mt-3">
               <span className="bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-xl">📚 Class {student.class}{student.section}</span>
               <span className="bg-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-xl">🔢 Roll No. {student.roll_no}</span>
             </div>
-          ) : (
-            <p className="text-amber-300 text-sm mt-3 bg-amber-900/30 border border-amber-500/25 rounded-xl px-4 py-2 inline-block">
-              ⚠️ Your student profile is being set up. Check back soon.
-            </p>
           )}
         </div>
 
-        {/* Quick links */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+        {/* Quick links — My portal */}
+        <h2 className="font-black text-slate-700 text-xs uppercase tracking-widest mb-3">My Portal</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {[
-            {icon:'📊', label:'My Results',  href:'/dashboard/results',    bg:'#ecfdf5', border:'#bbf7d0', text:'#14532d'},
-            {icon:'✅', label:'Attendance',  href:'/dashboard/attendance', bg:'#eff6ff', border:'#bfdbfe', text:'#1e3a8a'},
-            {icon:'📅', label:'Timetable',   href:'/timetable',            bg:'#faf5ff', border:'#e9d5ff', text:'#581c87'},
-            {icon:'📢', label:'Notices',     href:'/notices',              bg:'#fffbeb', border:'#fde68a', text:'#78350f'},
+            {icon:'📊', label:'Overall Results',           sub:'Class 6th to 10th',    href:'/dashboard/results',    bg:'#ecfdf5', border:'#bbf7d0', text:'#14532d'},
+            {icon:'✅', label:'Overall Attendance',        sub:'Class 6th to 10th',    href:'/dashboard/attendance', bg:'#eff6ff', border:'#bfdbfe', text:'#1e3a8a'},
+            {icon:'📅', label:'Timetable',                 sub:'Class schedule',        href:'/timetable',            bg:'#faf5ff', border:'#e9d5ff', text:'#581c87'},
+            {icon:'📢', label:'Notices',                   sub:'School announcements',  href:'/notices',              bg:'#fffbeb', border:'#fde68a', text:'#78350f'},
           ].map(q=>(
             <Link key={q.href} href={q.href}
               className="rounded-2xl p-4 text-center hover:-translate-y-1 hover:shadow-md transition-all border-2"
               style={{background:q.bg, borderColor:q.border}}>
-              <div className="text-2xl mb-1.5">{q.icon}</div>
-              <div className="font-bold text-sm" style={{color:q.text}}>{q.label}</div>
+              <div className="text-2xl mb-1">{q.icon}</div>
+              <div className="font-black text-sm leading-tight" style={{color:q.text}}>{q.label}</div>
+              <div className="text-xs mt-0.5 opacity-60" style={{color:q.text}}>{q.sub}</div>
             </Link>
           ))}
         </div>
 
+        {/* School sections */}
+        <h2 className="font-black text-slate-700 text-xs uppercase tracking-widest mb-3">Explore School</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-8">
+          {[
+            {icon:'👨‍🏫', label:'Teachers',     href:'/teachers'},
+            {icon:'🖼️', label:'Gallery',       href:'/gallery'},
+            {icon:'📰', label:'News',          href:'/news'},
+            {icon:'🏆', label:'Achievements',  href:'/achievements'},
+            {icon:'📚', label:'Library',       href:'/library'},
+            {icon:'ℹ️', label:'About',         href:'/about'},
+            {icon:'📋', label:'Results',       href:'/results'},
+          ].map(q=>(
+            <Link key={q.href} href={q.href}
+              className="bg-white border-2 border-slate-100 rounded-2xl p-3 text-center hover:-translate-y-1 hover:shadow-md hover:border-green-200 transition-all">
+              <div className="text-2xl mb-1">{q.icon}</div>
+              <div className="font-bold text-xs text-slate-600">{q.label}</div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Notices + Exams */}
         <div className="grid md:grid-cols-2 gap-5">
-          {/* Notices */}
           <div className="bg-white rounded-3xl border border-slate-100 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-black text-slate-800" style={{fontFamily:'Georgia,serif'}}>📢 Latest Notices</h2>
@@ -129,7 +150,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Upcoming Exams */}
           <div className="bg-white rounded-3xl border border-slate-100 p-6">
             <h2 className="font-black text-slate-800 mb-4" style={{fontFamily:'Georgia,serif'}}>📝 Upcoming Exams</h2>
             <div className="space-y-2.5">
@@ -155,6 +175,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
       </main>
     </div>
   )
