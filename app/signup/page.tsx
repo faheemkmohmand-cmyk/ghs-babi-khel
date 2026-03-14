@@ -1,155 +1,132 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import toast from 'react-hot-toast'
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPass, setConfirmPass] = useState('')
+  const [form, setForm] = useState({ fullName:'', email:'', phone:'', password:'', confirm:'', role:'student' })
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  function update(k: string, v: string) { setForm(f => ({...f,[k]:v})) }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    if (!fullName.trim()) { setError('Please enter your full name'); return }
-    if (!email) { setError('Please enter your email'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
-    if (password !== confirmPass) { setError('Passwords do not match'); return }
-
+    if (!form.fullName||!form.email||!form.password) { toast.error('Please fill all required fields'); return }
+    if (form.password.length < 8) { toast.error('Password must be at least 8 characters'); return }
+    if (form.password !== form.confirm) { toast.error('Passwords do not match'); return }
     setLoading(true)
     try {
-      const supabase = createClient()
-
-      const { data, error: signupError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName.trim() } }
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: { full_name: form.fullName, role: form.role, phone: form.phone }
+        }
       })
-
-      if (signupError) { setError(signupError.message); return }
-
-      // Always create profile immediately
+      if (error) { toast.error(error.message); return }
       if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email: email,
-          full_name: fullName.trim(),
-          role: 'student'
-        })
+        toast.success('Account created! Welcome to GHS Babi Khel 🎉')
+        router.push('/dashboard')
       }
-
-      setSuccess(true)
-      // Auto redirect to login after 2 seconds
-      setTimeout(() => { window.location.href = '/login' }, 2000)
-
-    } catch (e: any) {
-      setError(e.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
+    } catch { toast.error('Something went wrong. Please try again.') }
+    finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6"
+    <div className="min-h-screen flex items-center justify-center p-4"
       style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
-      <div className="w-full max-w-md">
+      <div className="absolute inset-0 pointer-events-none"
+        style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.03) 1px,transparent 1px)',backgroundSize:'50px 50px'}} />
 
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3 shadow-2xl">🏫</div>
-          <div className="font-display text-xl font-black text-white">GHS Babi Khel</div>
-          <p className="text-white/40 text-sm mt-1">Create your school account</p>
+      <div className="w-full max-w-md animate-fade-up relative z-10">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3 shadow-2xl ring-4 ring-green-400/15">🏫</div>
+          <h1 className="font-display text-xl font-black text-white">GHS Babi Khel</h1>
+          <p className="text-white/35 text-xs mt-1">Student & Parent Registration</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-8 shadow-2xl">
-          <h2 className="font-display text-2xl font-black text-slate-800 mb-1">Create Account</h2>
-          <p className="text-slate-400 text-sm mb-6">Join GHS Babi Khel School Portal</p>
+        <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-7">
+          <h2 className="font-display text-xl font-black text-white mb-1">Create Account</h2>
+          <p className="text-white/35 text-sm mb-6">Join the GHS Babi Khel portal</p>
 
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 mb-4">
-              <p className="text-red-700 text-sm font-bold">❌ {error}</p>
-            </div>
-          )}
-
-          {success ? (
-            <div className="text-center py-6">
-              <div className="text-5xl mb-3">✅</div>
-              <p className="font-black text-green-700 text-lg">Account Created!</p>
-              <p className="text-slate-500 text-sm mt-2">Redirecting to login page...</p>
-              <Link href="/login" className="mt-4 inline-block bg-green-900 text-white font-bold px-6 py-2.5 rounded-xl text-sm">
-                Go to Login →
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  placeholder="Your full name"
-                  required
-                  disabled={loading}
-                  autoComplete="name"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 transition-colors disabled:opacity-50"/>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Email Address *</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  required
-                  disabled={loading}
-                  autoComplete="email"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 transition-colors disabled:opacity-50"/>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Password *</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Min. 6 characters"
-                  required
-                  disabled={loading}
-                  autoComplete="new-password"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 transition-colors disabled:opacity-50"/>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Confirm Password *</label>
-                <input
-                  type="password"
-                  value={confirmPass}
-                  onChange={e => setConfirmPass(e.target.value)}
-                  placeholder="Repeat your password"
-                  required
-                  disabled={loading}
-                  autoComplete="new-password"
-                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 transition-colors disabled:opacity-50"/>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all text-base flex items-center justify-center gap-2 shadow-lg">
-                {loading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
-                {loading ? 'Creating account...' : '🎓 Create Account'}
+          {/* Role selector */}
+          <div className="grid grid-cols-2 gap-2 mb-5 p-1 bg-white/5 rounded-xl">
+            {[{v:'student',label:'🎓 Student'},{v:'parent',label:'👨‍👩‍👧 Parent'}].map(r=>(
+              <button key={r.v} type="button" onClick={()=>update('role',r.v)}
+                className={`py-2.5 rounded-lg text-sm font-bold transition-all ${form.role===r.v
+                  ? 'bg-green-900 text-white shadow-md'
+                  : 'text-white/40 hover:text-white/70'}`}>
+                {r.label}
               </button>
-            </form>
-          )}
+            ))}
+          </div>
 
-          {!success && (
-            <p className="text-center text-slate-400 text-sm mt-5">
+          <form onSubmit={handleSignup} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Full Name *</label>
+              <input type="text" value={form.fullName} onChange={e=>update('fullName',e.target.value)}
+                placeholder="Your full name" autoComplete="name"
+                className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-400/50 transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address *</label>
+              <input type="email" value={form.email} onChange={e=>update('email',e.target.value)}
+                placeholder="your@email.com" autoComplete="email"
+                className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-400/50 transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Phone Number</label>
+              <input type="tel" value={form.phone} onChange={e=>update('phone',e.target.value)}
+                placeholder="0300-1234567"
+                className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-400/50 transition-all" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password *</label>
+                <div className="relative">
+                  <input type={showPass?'text':'password'} value={form.password} onChange={e=>update('password',e.target.value)}
+                    placeholder="Min 8 chars"
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400/50 transition-all" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Confirm *</label>
+                <input type={showPass?'text':'password'} value={form.confirm} onChange={e=>update('confirm',e.target.value)}
+                  placeholder="Repeat"
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400/50 transition-all" />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" onChange={e=>setShowPass(e.target.checked)}
+                className="w-4 h-4 accent-green-500 rounded" />
+              <span className="text-white/35 text-xs">Show passwords</span>
+            </label>
+
+            <button type="submit" disabled={loading}
+              className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg">
+              {loading
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full spinner"/>Creating account...</>
+                : <><span>✨</span>Create Account</>}
+            </button>
+          </form>
+
+          <div className="mt-5 pt-5 border-t border-white/8 text-center text-sm space-y-2">
+            <p className="text-white/35">
               Already have an account?{' '}
-              <Link href="/login" className="text-green-700 font-bold hover:underline">Sign In →</Link>
+              <Link href="/login" className="text-green-400 font-bold hover:text-green-300">Sign In →</Link>
             </p>
-          )}
-          <Link href="/" className="block text-center text-slate-300 text-xs mt-2 hover:text-slate-500">← Back to website</Link>
+            <Link href="/" className="block text-white/20 text-xs hover:text-white/40 transition-colors">← Back to School Website</Link>
+          </div>
         </div>
       </div>
     </div>
