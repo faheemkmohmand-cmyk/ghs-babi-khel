@@ -26,4 +26,4 @@ export async function POST(request: NextRequest) {
   } catch (_) {}
 
   return NextResponse.redirect(`${origin}${destination}`, { status: 302 })
-} 
+}
