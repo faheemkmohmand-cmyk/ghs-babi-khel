@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const CATEGORIES = ['Academic','Sports','Events','Achievement','General','Announcement','Science']
 type Article = { id:string; title:string; content:string; category:string; image_url?:string; date:string; author:string; featured:boolean; published:boolean; created_at:string }
@@ -14,7 +17,6 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
   const [form, setForm] = useState(emptyForm)
   const [imgFile, setImgFile] = useState<File|null>(null)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   function openAdd() { setEditing(null); setForm(emptyForm); setImgFile(null); setShowModal(true) }
   function openEdit(a:Article) {

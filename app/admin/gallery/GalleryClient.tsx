@@ -1,7 +1,10 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 type Album = { id:string; name:string; description?:string; cover_url?:string; event_date?:string; created_at:string }
 type Photo = { id:string; album_id:string; url:string; caption?:string; created_at:string }
@@ -16,7 +19,6 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
   const [uploadProgress, setUploadProgress] = useState(0)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const albumPhotos = photos.filter(p => p.album_id === selAlbum?.id)
 

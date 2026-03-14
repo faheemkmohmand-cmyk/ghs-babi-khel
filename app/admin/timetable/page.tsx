@@ -1,14 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import AdminLayout from '@/components/admin/AdminLayout'
 import TimetableClient from './TimetableClient'
+
+const supabase = createClient()
 export default function Page() {
   const [adminName, setAdminName] = useState('Admin')
   const [slots, setSlots]         = useState<any[]>([])
   const [teachers, setTeachers]   = useState<any[]>([])
   const [ready, setReady]         = useState(false)
-  const supabase = createClient()
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()

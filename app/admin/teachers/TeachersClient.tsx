@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','English','Urdu','Islamiat','Pakistan Studies','Computer Science','History','Geography','Arabic','Physical Education','Art','General Science']
 const DEPTS = ['Science','Arts','Languages','Islamic Studies','Physical Education','Computer','General']
@@ -21,7 +24,6 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
   const [form, setForm] = useState(emptyForm)
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
-  const supabase = createClient()
 
   const filtered = teachers.filter(t => !search || t.full_name.toLowerCase().includes(search.toLowerCase()) || t.subject.toLowerCase().includes(search.toLowerCase()))
 

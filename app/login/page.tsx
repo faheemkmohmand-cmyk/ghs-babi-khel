@@ -3,13 +3,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const supabase = createClient()
+
 export default function LoginPage() {
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]  = useState(false)
   const [error, setError]      = useState('')
-  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()

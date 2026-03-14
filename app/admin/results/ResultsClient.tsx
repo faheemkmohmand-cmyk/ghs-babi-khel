@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const SUBJECTS_BY_CLASS: Record<string,string[]> = {
   '6': ['Urdu','English','Mathematics','General Science','Social Studies','Islamiat'],
@@ -34,7 +37,6 @@ export default function ResultsClient({ initialResults, students }: { initialRes
   const [year, setYear] = useState(new Date().getFullYear().toString())
   const [marks, setMarks] = useState<Record<string,string>>({})
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   const selStudent = students.find(s=>s.id===selStudentId)
   const subjects = selStudent ? (SUBJECTS_BY_CLASS[selStudent.class] || SUBJECTS_BY_CLASS['9']) : []
@@ -216,7 +218,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
                       {subjects.map(sub=>(
                         <div key={sub} className="flex items-center gap-3 bg-white rounded-xl px-3 py-2 border border-slate-200">
                           <label className="flex-1 text-sm font-semibold text-slate-700">{sub}</label>
-                          <input type="number" min={0} max={100} value={marks[sub]||''} onChange={e=>updateMark(sub,e.target.value)} placeholder="0"
+                          <input type="number" min={0} max={100} defaultValue={marks[sub]||''} onBlur={e=>updateMark(sub,e.target.value)} placeholder="0"
                             className="w-16 text-center border-2 border-slate-200 rounded-lg px-2 py-1 text-sm font-bold outline-none focus:border-green-500 transition-colors" />
                         </div>
                       ))}

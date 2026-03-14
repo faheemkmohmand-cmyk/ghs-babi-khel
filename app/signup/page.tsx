@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const supabase = createClient()
+
 export default function SignupPage() {
   const [fullName, setFullName]   = useState('')
   const [email, setEmail]         = useState('')
@@ -12,7 +14,6 @@ export default function SignupPage() {
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
   const [done, setDone]           = useState(false)
-  const supabase = createClient()
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()

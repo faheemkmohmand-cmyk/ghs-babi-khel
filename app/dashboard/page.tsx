@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const supabase = createClient()
+
 export default function DashboardPage() {
   const [user, setUser]       = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
@@ -10,7 +12,6 @@ export default function DashboardPage() {
   const [notices, setNotices] = useState<any[]>([])
   const [exams, setExams]     = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     async function load() {

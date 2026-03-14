@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const supabase = createClient()
+
 export default function MyResultsPage() {
   const [student, setStudent]   = useState<any>(null)
   const [results, setResults]   = useState<any[]>([])
   const [profile, setProfile]   = useState<any>(null)
   const [loading, setLoading]   = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     async function load() {

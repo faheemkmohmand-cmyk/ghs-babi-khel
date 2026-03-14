@@ -1,7 +1,10 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const CLASSES = ['6','7','8','9','10']
 const SECTIONS = ['A','B','C']
@@ -25,7 +28,6 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const supabase = createClient()
 
   const filtered = students.filter(s => {
     const q = search.toLowerCase()

@@ -1,7 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 type Student = { id:string; full_name:string; class:string; section:string; roll_no:string; photo_url?:string }
 type AttendanceRecord = { id:string; student_id:string; date:string; status:string; class:string; section:string }
@@ -22,7 +25,6 @@ export default function AttendanceClient({ students, initialAttendance, today }:
   const [attendance, setAttendance] = useState<Record<string,StatusType>>({})
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const classes = [...new Set(students.map(s=>s.class))].sort()
   const classStudents = students.filter(s => (!selClass || s.class === selClass) && s.section === selSection)

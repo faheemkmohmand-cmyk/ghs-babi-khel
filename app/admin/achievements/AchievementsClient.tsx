@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const CATEGORIES = ['Academic','Sports','Arts','Science','Debate','Community','Technology','Other']
 const LEVELS = ['School','District','Provincial','National','International']
@@ -25,7 +28,6 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [saving, setSaving] = useState(false)
   const [filterCat, setFilterCat] = useState('')
-  const supabase = createClient()
 
   const filtered = items.filter(a => !filterCat || a.category === filterCat)
 

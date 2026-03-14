@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','English','Urdu','Islamiat','Pakistan Studies','Computer Science','General Science','Social Studies','History','Geography','Arabic']
 const CLASSES = ['All','6','7','8','9','10']
@@ -23,7 +26,6 @@ export default function LibraryClient({ books:initBooks, issues:initIssues, stud
   const [bookForm, setBookForm] = useState(emptyBook)
   const [issueForm, setIssueForm] = useState({ book_id:'', student_id:'', due_date:'' })
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   const filteredBooks = books.filter(b => !search || b.title.toLowerCase().includes(search.toLowerCase()) || b.author.toLowerCase().includes(search.toLowerCase()) || b.subject.toLowerCase().includes(search.toLowerCase()))
 
