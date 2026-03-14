@@ -92,10 +92,10 @@ export default function DashboardPage() {
         <h2 className="font-black text-slate-700 text-xs uppercase tracking-widest mb-3">My Portal</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {[
-            {icon:'📊', label:'Overall Results',           sub:'Class 6th to 10th',    href:'/dashboard/results',    bg:'#ecfdf5', border:'#bbf7d0', text:'#14532d'},
-            {icon:'✅', label:'Overall Attendance',        sub:'Class 6th to 10th',    href:'/dashboard/attendance', bg:'#eff6ff', border:'#bfdbfe', text:'#1e3a8a'},
-            {icon:'📅', label:'Timetable',                 sub:'Class schedule',        href:'/timetable',            bg:'#faf5ff', border:'#e9d5ff', text:'#581c87'},
-            {icon:'📢', label:'Notices',                   sub:'School announcements',  href:'/notices',              bg:'#fffbeb', border:'#fde68a', text:'#78350f'},
+            {icon:'📊', label:'Results',    sub:'View exam results',     href:'/results',   bg:'#ecfdf5', border:'#bbf7d0', text:'#14532d'},
+            {icon:'📅', label:'Timetable', sub:'Class schedule',         href:'/timetable', bg:'#eff6ff', border:'#bfdbfe', text:'#1e3a8a'},
+            {icon:'🏆', label:'Achievements', sub:'Student achievements', href:'/achievements', bg:'#faf5ff', border:'#e9d5ff', text:'#581c87'},
+            {icon:'📢', label:'Notices',   sub:'School announcements',   href:'/notices',   bg:'#fffbeb', border:'#fde68a', text:'#78350f'},
           ].map(q=>(
             <Link key={q.href} href={q.href}
               className="rounded-2xl p-4 text-center hover:-translate-y-1 hover:shadow-md transition-all border-2"
