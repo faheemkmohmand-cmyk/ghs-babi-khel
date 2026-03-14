@@ -10,14 +10,28 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url), { status: 302 })
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url),
+      { status: 302 }
+    )
   }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+  // Get or create profile
+  let role = 'student'
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', data.user.id).single()
 
-  if (profile?.role === 'admin') {
-    return NextResponse.redirect(new URL('/admin', request.url), { status: 302 })
+  if (!profile) {
+    await supabase.from('profiles').upsert({
+      id: data.user.id,
+      email: data.user.email,
+      full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+      role: 'student'
+    })
+  } else {
+    role = profile.role || 'student'
   }
 
-  return NextResponse.redirect(new URL('/dashboard', request.url), { status: 302 })
+  const destination = role === 'admin' ? '/admin' : '/dashboard'
+  return NextResponse.redirect(new URL(destination, request.url), { status: 302 })
 }
