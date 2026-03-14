@@ -54,7 +54,6 @@ export default async function HomePage() {
               ['Teachers', '/teachers'],
               ['News', '/news'],
               ['Gallery', '/gallery'],
-              ['Notices', '/notices'],
               ['Results', '/results'],
               ['Library', '/library'],
             ].map(([label, href]) => (
@@ -241,7 +240,7 @@ export default async function HomePage() {
             <div>
               <h4 className="font-bold text-sm text-white/60 uppercase tracking-widest mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {[['About School','/about'],['Our Teachers','/teachers'],['Notice Board','/notices'],['Results','/results'],['Gallery','/gallery'],['News','/news'],['Library','/library'],['Achievements','/achievements']].map(([l,h])=>(
+                {[['About School','/about'],['Our Teachers','/teachers'],['Results','/results'],['Gallery','/gallery'],['News','/news'],['Library','/library'],['Achievements','/achievements']].map(([l,h])=>(
                   <Link key={h} href={h} className="block text-white/50 hover:text-white text-sm transition-colors">{l}</Link>
                 ))}
               </div>
