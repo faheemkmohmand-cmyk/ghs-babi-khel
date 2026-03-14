@@ -56,6 +56,7 @@ export default async function HomePage() {
               ['Gallery', '/gallery'],
               ['Results', '/results'],
               ['Library', '/library'],
+              ['Attendance', '/attendance'],
             ].map(([label, href]) => (
               <Link key={href} href={href}
                 className="text-white/60 hover:text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-white/8 transition-all">
@@ -107,7 +108,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap gap-3">
                 <Link href="/signup"
                   className="bg-green-900 hover:bg-green-950 text-white font-bold px-6 py-3.5 rounded-2xl text-sm flex items-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all">
-                  🎓 Student Portal →
+                  🏫 School Portal →
                 </Link>
                 <Link href="/notices"
                   className="bg-white/8 hover:bg-white/14 border border-white/15 text-white font-semibold px-6 py-3.5 rounded-2xl text-sm transition-all">
@@ -170,6 +171,8 @@ export default async function HomePage() {
             { icon:'🏆', label:'Achievements',href:'/achievements', bg:'bg-indigo-50',  border:'border-indigo-100', text:'text-indigo-700'},
             { icon:'🖼️', label:'Gallery',     href:'/gallery',      bg:'bg-pink-50',    border:'border-pink-100',   text:'text-pink-700'  },
             { icon:'📰', label:'News',        href:'/news',         bg:'bg-blue-50',    border:'border-blue-100',   text:'text-blue-700'  },
+            { icon:'✅', label:'Attendance',  href:'/attendance',   bg:'bg-purple-50',  border:'border-purple-100', text:'text-purple-700'},
+            { icon:'👨‍🏫', label:'Teachers',   href:'/teachers',     bg:'bg-orange-50',  border:'border-orange-100', text:'text-orange-700'},
           ].map(q => (
             <Link key={q.href} href={q.href}
               className={`${q.bg} ${q.border} border-2 rounded-2xl p-4 text-center hover:-translate-y-1 hover:shadow-lg transition-all group`}>
