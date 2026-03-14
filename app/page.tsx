@@ -7,17 +7,9 @@ export default async function HomePage() {
     .from('school_settings').select('*').single()
 
   const schoolName = settings?.school_name || 'Government High School Babi Khel'
-  const shortName = settings?.short_name || 'GHS Babi Khel'
   const principal = settings?.principal_name || ''
   const totalStudents = settings?.total_students || 450
   const totalTeachers = settings?.total_teachers || 18
-  const totalClasses = settings?.total_classes || 5
-  const yearsOfExcellence = settings?.years_of_excellence || 35
-  const logoUrl = settings?.logo_url || ''
-  const bannerUrl = settings?.banner_url || ''
-  const bannerTitle = settings?.banner_title || 'Welcome to GHS Babi Khel'
-  const bannerSubtitle = settings?.banner_subtitle || 'Providing quality education since 1989'
-  const showBanner = settings?.show_banner || false
 
   const { data: notices } = await supabase
     .from('notices')
@@ -39,11 +31,9 @@ export default async function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-navy-900/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-lg shadow-lg overflow-hidden">
-                {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover"/> : <span>🏫</span>}
-              </div>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-lg shadow-lg">🏫</div>
             <div>
-              <div className="font-display font-bold text-white text-sm leading-none">{shortName}</div>
+              <div className="font-display font-bold text-white text-sm leading-none">GHS Babi Khel</div>
               <div className="text-green-400 text-xs font-semibold">Khyber Pakhtunkhwa</div>
             </div>
           </Link>
@@ -52,11 +42,9 @@ export default async function HomePage() {
             {[
               ['About', '/about'],
               ['Teachers', '/teachers'],
-              ['News', '/news'],
-              ['Gallery', '/gallery'],
+              ['Notices', '/notices'],
               ['Results', '/results'],
               ['Library', '/library'],
-              ['Attendance', '/attendance'],
             ].map(([label, href]) => (
               <Link key={href} href={href}
                 className="text-white/60 hover:text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-white/8 transition-all">
@@ -108,7 +96,7 @@ export default async function HomePage() {
               <div className="flex flex-wrap gap-3">
                 <Link href="/signup"
                   className="bg-green-900 hover:bg-green-950 text-white font-bold px-6 py-3.5 rounded-2xl text-sm flex items-center gap-2 shadow-lg hover:-translate-y-0.5 transition-all">
-                  🏫 School Portal →
+                  🎓 Student Portal →
                 </Link>
                 <Link href="/notices"
                   className="bg-white/8 hover:bg-white/14 border border-white/15 text-white font-semibold px-6 py-3.5 rounded-2xl text-sm transition-all">
@@ -121,10 +109,10 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 gap-4 animate-fade-up" style={{animationDelay:'0.15s'}}>
               {[
                 { num: `${totalStudents}+`, label: 'Students Enrolled', icon: '🎓', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: `${totalTeachers}+`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: `${totalClasses}`, label: 'Classes Running', icon: '🏫', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                { num: `${yearsOfExcellence}+`, label: 'Years of Excellence', icon: '🏆', color: 'from-green-950/80 to-green-900/40', border: 'border-green-400/20' },
-                ].map(s => (
+                { num: `${totalTeachers}+`, label: 'Qualified Teachers', icon: '👨‍🏫', color: 'from-sky-950/80 to-sky-900/40', border: 'border-sky-400/20' },
+                { num: '12+', label: 'Classes Running', icon: '📚', color: 'from-purple-950/80 to-purple-900/40', border: 'border-purple-400/20' },
+                { num: '35+', label: 'Years of Excellence', icon: '🏆', color: 'from-amber-950/80 to-amber-900/40', border: 'border-amber-400/20' },
+              ].map(s => (
                 <div key={s.label} className={`bg-gradient-to-br ${s.color} border ${s.border} rounded-3xl p-5 backdrop-blur-sm`}>
                   <div className="text-3xl mb-2">{s.icon}</div>
                   <div className="font-display text-3xl font-black text-white">{s.num}</div>
@@ -143,19 +131,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-
-      {/* ── SCHOOL BANNER (admin controlled) ── */}
-      {showBanner && bannerUrl && (
-        <section className="relative w-full overflow-hidden" style={{height:'320px'}}>
-          <img src={bannerUrl} alt="School Banner" className="w-full h-full object-cover"/>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4"
-            style={{background:'linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3), rgba(0,0,0,0.5))'}}>
-            <h2 className="font-display text-3xl md:text-5xl font-black mb-3 drop-shadow-lg">{bannerTitle}</h2>
-            <p className="text-white/80 text-lg md:text-xl drop-shadow-md">{bannerSubtitle}</p>
-          </div>
-        </section>
-      )}
-
       {/* ── QUICK LINKS ── */}
       <section className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
@@ -164,15 +139,12 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { icon:'📊', label:'Results',     href:'/results',      bg:'bg-green-50',   border:'border-green-100',  text:'text-green-700'  },
+            { icon:'📊', label:'Results',    href:'/results',     bg:'bg-green-50',   border:'border-green-100',  text:'text-green-700' },
             { icon:'📅', label:'Timetable',  href:'/timetable',   bg:'bg-sky-50',     border:'border-sky-100',    text:'text-sky-700'   },
+            { icon:'✅', label:'Attendance', href:'/attendance',  bg:'bg-purple-50',  border:'border-purple-100', text:'text-purple-700'},
             { icon:'📢', label:'Notices',    href:'/notices',     bg:'bg-amber-50',   border:'border-amber-100',  text:'text-amber-700' },
             { icon:'📚', label:'Library',    href:'/library',     bg:'bg-rose-50',    border:'border-rose-100',   text:'text-rose-700'  },
-            { icon:'🏆', label:'Achievements',href:'/achievements', bg:'bg-indigo-50',  border:'border-indigo-100', text:'text-indigo-700'},
-            { icon:'🖼️', label:'Gallery',     href:'/gallery',      bg:'bg-pink-50',    border:'border-pink-100',   text:'text-pink-700'  },
-            { icon:'📰', label:'News',        href:'/news',         bg:'bg-blue-50',    border:'border-blue-100',   text:'text-blue-700'  },
-            { icon:'✅', label:'Attendance',  href:'/attendance',   bg:'bg-purple-50',  border:'border-purple-100', text:'text-purple-700'},
-            { icon:'👨‍🏫', label:'Teachers',   href:'/teachers',     bg:'bg-orange-50',  border:'border-orange-100', text:'text-orange-700'},
+            { icon:'🏆', label:'Achievements',href:'/achievements',bg:'bg-indigo-50', border:'border-indigo-100', text:'text-indigo-700'},
           ].map(q => (
             <Link key={q.href} href={q.href}
               className={`${q.bg} ${q.border} border-2 rounded-2xl p-4 text-center hover:-translate-y-1 hover:shadow-lg transition-all group`}>
@@ -216,7 +188,9 @@ export default async function HomePage() {
       {principal && (
         <section className="max-w-7xl mx-auto px-4 py-16">
           <div className="bg-gradient-to-br from-navy-900 to-navy-800 rounded-3xl p-8 md:p-12 text-white flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-4xl flex-shrink-0 shadow-lg">👨‍💼</div>
+            {settings?.principal_photo_url
+              ? <img src={settings.principal_photo_url} alt={principal} className="w-24 h-24 rounded-full object-cover flex-shrink-0 shadow-lg border-4 border-white/20"/>
+              : <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-4xl flex-shrink-0 shadow-lg">👨‍💼</div>}
             <div>
               <div className="text-green-400 text-xs font-bold uppercase tracking-widest mb-2">Message from the Principal</div>
               <h2 className="font-display text-2xl font-black mb-3">{principal}</h2>
@@ -243,7 +217,7 @@ export default async function HomePage() {
             <div>
               <h4 className="font-bold text-sm text-white/60 uppercase tracking-widest mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {[['About School','/about'],['Our Teachers','/teachers'],['Results','/results'],['Gallery','/gallery'],['News','/news'],['Library','/library'],['Achievements','/achievements']].map(([l,h])=>(
+                {[['About School','/about'],['Our Teachers','/teachers'],['Notice Board','/notices'],['Results','/results']].map(([l,h])=>(
                   <Link key={h} href={h} className="block text-white/50 hover:text-white text-sm transition-colors">{l}</Link>
                 ))}
               </div>
@@ -251,7 +225,7 @@ export default async function HomePage() {
             <div>
               <h4 className="font-bold text-sm text-white/60 uppercase tracking-widest mb-4">Student Portal</h4>
               <div className="space-y-2">
-                {[['Login','/login'],['Sign Up','/signup'],['My Results','/dashboard'],['My Results','/dashboard']].map(([l,h])=>(
+                {[['Login','/login'],['Sign Up','/signup'],['My Results','/dashboard'],['My Attendance','/dashboard']].map(([l,h])=>(
                   <Link key={h} href={h} className="block text-white/50 hover:text-white text-sm transition-colors">{l}</Link>
                 ))}
               </div>
