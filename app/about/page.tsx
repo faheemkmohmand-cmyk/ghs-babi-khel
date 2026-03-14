@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export default async function AboutPage() {
   const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('*').order('created_at', { ascending: false }).limit(1)
+  const { data: settingsRows } = await supabase.from('school_settings').select('*').order('created_at', { ascending: false }).limit(1)
   const settings = settingsRows?.[0] || null
   const { data: teachers } = await supabase.from('teachers').select('full_name,subject,qualification,photo_url').eq('status','active').order('full_name').limit(8)
   const s = settings||{ school_name:'Government High School Babi Khel', principal_name:'', established_year:'1989', phone:'', email:'', address:'Babi Khel, Khyber Pakhtunkhwa, Pakistan', total_students:450, total_teachers:18, mission:'To provide quality education with Islamic values, developing responsible citizens.', vision:'A school where every student reaches their full potential.' }
