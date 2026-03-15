@@ -77,7 +77,7 @@ export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
   }
 
   async function updateStatus(id:string, status:string) {
-    const { data } = await supabase.from('exams').update({ status }).eq('id', id).select().single() as any
+    const { data } = await supabase.from('exams').update({ status } as any).eq('id', id).select().single() as any
     if (data) { setExams(prev => prev.map(e=>e.id===id?data:e)); toast.success(`Status → ${status}`) }
   }
 

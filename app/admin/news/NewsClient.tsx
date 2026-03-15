@@ -44,12 +44,12 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
       let image_url = editing?.image_url || null
       if (imgFile) { const url = await uploadImage(tmpId); if (url) image_url = url }
       if (editing) {
-        const { data, error } = await supabase.from('news').update({...form, image_url}).eq('id', editing.id).select().single() as any
+        const { data, error } = await supabase.from('news').update({...form, image_url} as any).eq('id', editing.id).select().single() as any
         if (error) { toast.error(error.message); return }
         setNews(prev => prev.map(a => a.id===editing.id ? data : a))
         toast.success('Article updated ✅')
       } else {
-        const { data, error } = await supabase.from('news').insert({...form, image_url}).select().single() as any
+        const { data, error } = await supabase.from('news').insert({...form, image_url} as any).select().single() as any
         if (error) { toast.error(error.message); return }
         setNews(prev => [data, ...prev])
         toast.success('Article published ✅')
@@ -66,7 +66,7 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
   }
 
   async function togglePublish(a:Article) {
-    const { data } = await supabase.from('news').update({published:!a.published}).eq('id',a.id).select().single() as any
+    const { data } = await supabase.from('news').update({published:!a.published} as any).eq('id',a.id).select().single() as any
     if (data) { setNews(prev=>prev.map(x=>x.id===a.id?data:x)); toast.success(data.published?'Published':'Hidden') }
   }
 

@@ -45,7 +45,7 @@ export default function NoticesClient({ initialNotices }: { initialNotices: Noti
   }
 
   async function togglePublish(n: Notice) {
-    const { data } = await supabase.from('notices').update({ published: !n.published }).eq('id', n.id).select().single() as any
+    const { data } = await supabase.from('notices').update({ published: !n.published } as any).eq('id', n.id).select().single() as any
     if (data) { setNotices(prev => prev.map(x => x.id === n.id ? data : x)); toast.success(data.published ? 'Notice published' : 'Notice hidden') }
   }
 

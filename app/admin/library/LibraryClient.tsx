@@ -66,9 +66,9 @@ export default function LibraryClient({ books:initBooks, issues:initIssues, stud
     setSaving(true)
     try {
       const today = new Date().toISOString().split('T')[0]
-      const { data, error } = await supabase.from('book_issues').insert({ ...issueForm, issued_date:today, status:'issued' }).select('*, books(title), students(full_name,class,section)').single() as any
+      const { data, error } = await supabase.from('book_issues').insert({ ...issueForm, issued_date:today, status:'issued' } as any).select('*, books(title), students(full_name,class,section)').single() as any
       if (error) { toast.error(error.message); return }
-      await supabase.from('books').update({ available_copies: book.available_copies-1 }).eq('id', book.id)
+      await supabase.from('books').update({ available_copies: book.available_copies-1 } as any).eq('id', book.id)
       setBooks(prev => prev.map(b=>b.id===book.id?{...b,available_copies:b.available_copies-1}:b))
       setIssues(prev => [data, ...prev])
       toast.success('Book issued ✅')
@@ -79,9 +79,9 @@ export default function LibraryClient({ books:initBooks, issues:initIssues, stud
   async function handleReturn(issue:Issue) {
     if (!confirm('Mark book as returned?')) return
     const today = new Date().toISOString().split('T')[0]
-    await supabase.from('book_issues').update({ status:'returned', returned_date:today }).eq('id', issue.id)
+    await supabase.from('book_issues').update({ status:'returned', returned_date:today } as any).eq('id', issue.id)
     const bookToReturn = books.find(b=>b.id===issue.book_id)
-    if (bookToReturn) await supabase.from('books').update({ available_copies: bookToReturn.available_copies+1 }).eq('id', issue.book_id)
+    if (bookToReturn) await supabase.from('books').update({ available_copies: bookToReturn.available_copies+1 } as any).eq('id', issue.book_id)
     // Simpler: just re-fetch or increment locally
     const book = books.find(b=>b.id===issue.book_id)
     if (book) setBooks(prev => prev.map(b=>b.id===book.id?{...b,available_copies:b.available_copies+1}:b))

@@ -58,7 +58,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
       const { error } = await supabase.storage.from('gallery').upload(path, file)
       if (!error) {
         const url = supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl
-        const { data } = await supabase.from('gallery_photos').insert({ album_id: selAlbum.id, url }).select().single()
+        const { data } = await supabase.from('gallery_photos').insert({ album_id: selAlbum.id, url } as any).select().single()
         if (data) newPhotos.push(data)
       }
       done++
@@ -66,7 +66,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
     }
     // Update album cover if no cover yet
     if (newPhotos.length > 0 && !selAlbum.cover_url) {
-      const { data } = await supabase.from('gallery_albums').update({ cover_url: newPhotos[0].url }).eq('id', selAlbum.id).select().single() as any
+      const { data } = await supabase.from('gallery_albums').update({ cover_url: newPhotos[0].url } as any).eq('id', selAlbum.id).select().single() as any
       if (data) { setAlbums(prev => prev.map(a=>a.id===selAlbum.id?data:a)); setSelAlbum(data) }
     }
     setPhotos(prev => [...prev, ...newPhotos])
@@ -84,7 +84,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
 
   async function setCover(photo:Photo) {
     if (!selAlbum) return
-    const { data } = await supabase.from('gallery_albums').update({ cover_url: photo.url }).eq('id', selAlbum.id).select().single() as any
+    const { data } = await supabase.from('gallery_albums').update({ cover_url: photo.url } as any).eq('id', selAlbum.id).select().single() as any
     if (data) { setAlbums(prev => prev.map(a=>a.id===selAlbum.id?data:a)); setSelAlbum(data); toast.success('Cover photo set ✅') }
   }
 

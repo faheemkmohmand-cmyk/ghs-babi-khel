@@ -67,7 +67,7 @@ export default function AdminDashboard() {
           total_teachers: Number(schoolInfo.total_teachers),
           established_year: schoolInfo.established_year,
           total_classes: Number(schoolInfo.total_classes),
-        }).eq('id', schoolInfo.id)
+        } as any).eq('id', schoolInfo.id)
       }
     } finally { setSavingInfo(false) }
   }

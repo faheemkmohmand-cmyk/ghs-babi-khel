@@ -97,7 +97,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
         // No row exists yet — insert once, then save the id so future saves update
         const { data, error } = await (supabase as any)
           .from('school_settings')
-          .insert({ ...payload })
+          .insert({ ...payload } as any)
           .select()
           .single()
         if (error) { toast.error(error.message); return }

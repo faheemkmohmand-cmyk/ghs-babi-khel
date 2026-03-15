@@ -65,7 +65,7 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
         setStudents(prev => prev.map(s => s.id === editing.id ? data : s))
         toast.success('Student updated ✅')
       } else {
-        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl}).select().single() as any
+        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl} as any).select().single() as any
         if (error) { toast.error(error.message); return }
         setStudents(prev => [data, ...prev])
         toast.success('Student added ✅')
