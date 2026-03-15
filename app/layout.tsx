@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
   title: 'Government High School Babi Khel',
-  description: 'Official website of GHS Babi Khel — Student portal, results, timetable and more.',
+  description: 'Official website of GHS Babi Khel — Student portal, results, gallery and more.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

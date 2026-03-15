@@ -3,13 +3,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+const supabase = createClient()
+
 export default function LoginPage() {
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]  = useState(false)
   const [error, setError]      = useState('')
-  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -46,11 +47,11 @@ export default function LoginPage() {
         <div className="relative z-10 text-center max-w-sm">
           <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl ring-8 ring-green-400/10">🏫</div>
           <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
-          <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 1989</p>
+          <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
           <div className="grid grid-cols-2 gap-3 text-left">
             {[
               {icon:'🎓',label:'Student Results',sub:'Check your marks'},
-              {icon:'✅',label:'Attendance',sub:'View your record'},
+              {icon:'🖼️',label:'Gallery',sub:'Photos & events'},
               {icon:'📅',label:'Timetable',sub:'Class schedule'},
               {icon:'📢',label:'Notices',sub:'School updates'},
             ].map(f=>(
