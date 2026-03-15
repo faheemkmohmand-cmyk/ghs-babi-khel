@@ -56,6 +56,7 @@ export default function AdminDashboard() {
 
   async function saveSchoolInfo() {
     if (!schoolInfo) return
+    const supabase = createClient()
     setSavingInfo(true)
     try {
       if (schoolInfo.id) {

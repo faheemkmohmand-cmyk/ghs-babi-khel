@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [done, setDone]           = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
+    const supabase = createClient()
     e.preventDefault()
     setError('')
     if (!fullName.trim()) { setError('Please enter your full name'); return }
