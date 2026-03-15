@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-
 export default function DashboardPage() {
   const [user, setUser]       = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
@@ -11,10 +10,10 @@ export default function DashboardPage() {
   const [notices, setNotices] = useState<any[]>([])
   const [exams, setExams]     = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
