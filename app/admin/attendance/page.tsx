@@ -15,19 +15,20 @@ export default function Page() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
+      // First try getSession (instant, reads cookie) then getUser as fallback
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/login'; return }
-      const user = session.user
-      const { data: p } = await (supabase as any).from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
+      const user = session?.user ?? null
+      if (!user) { window.location.href = '/login'; return }
+      const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
       if (!p || p.role !== 'admin') { window.location.href = '/dashboard'; return }
       setAdminName(p.full_name || 'Admin')
       const [{ data: s }, { data: a }] = await Promise.all([
-        (supabase as any).from('students').select('id,full_name,class,section,roll_no').eq('status','active').order('class').order('roll_no'),
-        (supabase as any).from('attendance').select('*').eq('date', today),
+        supabase.from('students').select('id,full_name,class,section,roll_no').eq('status','active').order('class').order('roll_no'),
+        supabase.from('attendance').select('*').eq('date', today),
       ])
       setStudents(s || [])
       setAttendance(a || [])
-      const { data: sett } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+      const { data: sett } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
       setSchoolInfo(sett)
       setReady(true)
     }

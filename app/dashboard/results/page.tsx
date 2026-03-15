@@ -13,15 +13,16 @@ export default function MyResultsPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
+      // First try getSession (instant, reads cookie) then getUser as fallback
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/login'; return }
-      const user = session.user
-      const { data: profile } = await (supabase as any).from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+      const user = session?.user ?? null
+      if (!user) { window.location.href = '/login'; return }
+      const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
       setProfile(profile)
-      const { data: student } = await (supabase as any).from('students').select('*').eq('user_id', user.id).maybeSingle()
+      const { data: student } = await supabase.from('students').select('*').eq('user_id', user.id).maybeSingle()
       setStudent(student)
       if (student) {
-        const { data: results } = await (supabase as any).from('results').select('*').eq('student_id', student.id).order('created_at', {ascending:false})
+        const { data: results } = await supabase.from('results').select('*').eq('student_id', student.id).order('created_at', {ascending:false})
         setResults(results || [])
       }
       setLoading(false)

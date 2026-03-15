@@ -15,15 +15,16 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
+      // First try getSession (instant, reads cookie) then getUser as fallback
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/login'; return }
-      const user = session.user
+      const user = session?.user ?? null
+      if (!user) { window.location.href = '/login'; return }
       setUser(user)
       const [{ data: profile }, { data: student }, { data: notices }, { data: exams }] = await Promise.all([
-        (supabase as any).from('profiles').select('*').eq('id', user.id).maybeSingle(),
-        (supabase as any).from('students').select('*').eq('user_id', user.id).maybeSingle(),
-        (supabase as any).from('notices').select('id,title,type,date,important').eq('published', true).order('date', { ascending: false }).limit(5),
-        (supabase as any).from('exams').select('id,name,start_date,status').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(4),
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('students').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('notices').select('id,title,type,date,important').eq('published', true).order('date', { ascending: false }).limit(5),
+        supabase.from('exams').select('id,name,start_date,status').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(4),
       ])
       setProfile(profile)
       setStudent(student)
