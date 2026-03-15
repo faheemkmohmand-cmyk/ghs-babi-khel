@@ -23,7 +23,7 @@ const NAV = [
   { icon: '⚙️', label: 'Settings',       href: '/admin/settings' },
 ]
 
-export default function AdminLayout({ adminName, children }: { adminName: string; children: React.ReactNode }) {
+export default function AdminLayout({ adminName, children, logoUrl, schoolName }: { adminName: string; children: React.ReactNode; logoUrl?: string; schoolName?: string }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const path = usePathname()
   const isActive = (href: string) => href === '/admin' ? path === '/admin' : path.startsWith(href)
@@ -32,9 +32,11 @@ export default function AdminLayout({ adminName, children }: { adminName: string
     <div className="flex flex-col h-full">
       <div className="px-5 py-4 border-b border-white/8 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>🏫</div>
+          {logoUrl
+            ? <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg flex-shrink-0"/>
+            : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg flex-shrink-0" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>🏫</div>}
           <div>
-            <div className="font-bold text-white text-sm" style={{fontFamily:'Georgia,serif'}}>GHS Babi Khel</div>
+            <div className="font-bold text-white text-sm" style={{fontFamily:'Georgia,serif'}}>{schoolName || 'GHS Babi Khel'}</div>
             <div className="text-green-400 text-xs font-bold">Admin Panel</div>
           </div>
         </div>
