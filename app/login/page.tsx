@@ -36,7 +36,7 @@ export default function LoginPage() {
         if (profile?.role) role = profile.role
       } catch (_) {}
 
-      window.location.href = role === 'admin' ? '/admin' : '/dashboard'
+      window.location.href = '/'
 
     } catch (_) {
       setError('Something went wrong. Please try again.')

@@ -61,6 +61,9 @@ export default function DashboardPage() {
             <span className="font-bold text-slate-800 text-sm" style={{fontFamily:'Georgia,serif'}}>GHS Babi Khel</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link href="/" className="text-xs font-bold px-3 py-1.5 rounded-lg border border-green-200 bg-green-50 text-green-800 hover:bg-green-100 transition-all flex items-center gap-1">
+              🏫 Main Page
+            </Link>
             <span className="text-slate-500 text-sm hidden sm:block">{displayName}</span>
             <div className="w-8 h-8 rounded-full bg-green-900 flex items-center justify-center text-white text-xs font-black">
               {displayName[0]?.toUpperCase()}
