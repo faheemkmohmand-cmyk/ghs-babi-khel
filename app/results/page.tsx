@@ -13,7 +13,7 @@ export default async function ResultsPage() {
     results = data || []
   } catch (_) {}
 
-  const exams    = Array.from(new Set(results.map(r => r.exam_name)))
+  const exams    = Array.from(new Set(results.map(r => r.exam_name)) as string[])
   const classes  = ['6','7','8','9','10']
 
   return (
