@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','English','Urdu','Islamiat','Pakistan Studies','Computer Science','History','Geography','Arabic','Physical Education','Art','General Science']
 const DEPTS = ['Science','Arts','Languages','Islamic Studies','Physical Education','Computer','General']
@@ -21,7 +24,6 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
   const [form, setForm] = useState(emptyForm)
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
-  const supabase = createClient()
 
   const filtered = teachers.filter(t => !search || t.full_name.toLowerCase().includes(search.toLowerCase()) || t.subject.toLowerCase().includes(search.toLowerCase()))
 
@@ -48,12 +50,12 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
       let photoUrl = editing?.photo_url || null
       if (photoFile) { const url = await uploadPhoto(editing?.id || 'new'); if (url) photoUrl = url }
       if (editing) {
-        const { data, error } = await supabase.from('teachers').update({...form, photo_url:photoUrl}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('teachers').update({...form, photo_url:photoUrl} as any).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setTeachers(prev => prev.map(t => t.id === editing.id ? data : t))
         toast.success('Teacher updated ✅')
       } else {
-        const { data, error } = await supabase.from('teachers').insert({...form, photo_url:photoUrl}).select().single()
+        const { data, error } = await supabase.from('teachers').insert({...form, photo_url:photoUrl} as any).select().single()
         if (error) { toast.error(error.message); return }
         setTeachers(prev => [...prev, data])
         toast.success('Teacher added ✅')
@@ -142,21 +144,41 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
                   <input type="file" accept="image/*" className="hidden" onChange={e=>setPhotoFile(e.target.files?.[0]||null)} />
                 </label>
               </div>
-              {[
-                {key:'full_name',label:'Full Name *',ph:'Mr. Muhammad Ahmed',col:2},
-                {key:'role',label:'Role/Position',ph:'Subject Teacher',col:1},
-                {key:'qualification',label:'Qualification',ph:'MSc, B.Ed',col:1},
-                {key:'phone',label:'Phone',ph:'0300-0000000',col:1},
-                {key:'email',label:'Email',ph:'teacher@gmail.com',col:1},
-                {key:'experience_years',label:'Years Experience',ph:'5',col:1,type:'number'},
-                {key:'joined_year',label:'Joined Year',ph:'2020',col:1},
-              ].map(f=>(
-                <div key={f.key} className={f.col===2?'col-span-2':''}>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">{f.label}</label>
-                  <input type={f.type||'text'} value={(form as any)[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:f.type==='number'?Number(e.target.value):e.target.value}))} placeholder={f.ph}
-                    className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
-                </div>
-              ))}
+              <div className="col-span-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Full Name *</label>
+                <input value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))} placeholder="Mr. Muhammad Ahmed"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Role/Position</label>
+                <input value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} placeholder="Subject Teacher"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Qualification</label>
+                <input value={form.qualification} onChange={e=>setForm(p=>({...p,qualification:e.target.value}))} placeholder="MSc, B.Ed"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Phone</label>
+                <input value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))} placeholder="0300-0000000"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
+                <input value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} placeholder="teacher@gmail.com"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Years Experience</label>
+                <input type="number" value={form.experience_years} onChange={e=>setForm(p=>({...p,experience_years:Number(e.target.value)}))} placeholder="5"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Joined Year</label>
+                <input value={form.joined_year} onChange={e=>setForm(p=>({...p,joined_year:e.target.value}))} placeholder="2020"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Subject *</label>
                 <select value={form.subject} onChange={e=>setForm(p=>({...p,subject:e.target.value}))} className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 bg-white">

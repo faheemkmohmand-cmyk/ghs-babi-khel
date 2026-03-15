@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const CATEGORIES = ['Academic','Sports','Events','Achievement','General','Announcement','Science']
 type Article = { id:string; title:string; content:string; category:string; image_url?:string; date:string; author:string; featured:boolean; published:boolean; created_at:string }
@@ -14,7 +17,6 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
   const [form, setForm] = useState(emptyForm)
   const [imgFile, setImgFile] = useState<File|null>(null)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   function openAdd() { setEditing(null); setForm(emptyForm); setImgFile(null); setShowModal(true) }
   function openEdit(a:Article) {
@@ -41,12 +43,12 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
       let image_url = editing?.image_url || null
       if (imgFile) { const url = await uploadImage(tmpId); if (url) image_url = url }
       if (editing) {
-        const { data, error } = await supabase.from('news').update({...form, image_url}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('news').update({...form, image_url} as any).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setNews(prev => prev.map(a => a.id===editing.id ? data : a))
         toast.success('Article updated ✅')
       } else {
-        const { data, error } = await supabase.from('news').insert({...form, image_url}).select().single()
+        const { data, error } = await supabase.from('news').insert({...form, image_url} as any).select().single()
         if (error) { toast.error(error.message); return }
         setNews(prev => [data, ...prev])
         toast.success('Article published ✅')

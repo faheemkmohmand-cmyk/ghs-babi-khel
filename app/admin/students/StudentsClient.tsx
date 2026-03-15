@@ -1,7 +1,10 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
+const supabase = createClient()
 
 const CLASSES = ['6','7','8','9','10']
 const SECTIONS = ['A','B','C']
@@ -25,7 +28,6 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
   const [photoFile, setPhotoFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const supabase = createClient()
 
   const filtered = students.filter(s => {
     const q = search.toLowerCase()
@@ -57,12 +59,12 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
       if (photoFile) { const url = await uploadPhoto(tmpId); if (url) photoUrl = url }
 
       if (editing) {
-        const { data, error } = await supabase.from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()} as any).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setStudents(prev => prev.map(s => s.id === editing.id ? data : s))
         toast.success('Student updated ✅')
       } else {
-        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl}).select().single()
+        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl} as any).select().single()
         if (error) { toast.error(error.message); return }
         setStudents(prev => [data, ...prev])
         toast.success('Student added ✅')
@@ -186,21 +188,41 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
                 </div>
               </div>
 
-              {[
-                {key:'student_id',label:'Student ID *',ph:'GHS-2025-001',col:1},
-                {key:'roll_no',label:'Roll Number *',ph:'01',col:1},
-                {key:'full_name',label:'Full Name *',ph:'Muhammad Ali',col:2},
-                {key:'father_name',label:"Father's Name",ph:"Father's full name",col:2},
-                {key:'phone',label:'Phone',ph:'0300-0000000',col:1},
-                {key:'admitted_year',label:'Admitted Year',ph:'2024',col:1},
-                {key:'address',label:'Address',ph:'Village/Town',col:2},
-              ].map(f => (
-                <div key={f.key} className={f.col===2?'col-span-2':''}>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">{f.label}</label>
-                  <input value={(form as any)[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph}
-                    className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Student ID *</label>
+                <input value={form.student_id} onChange={e=>setForm(p=>({...p,student_id:e.target.value}))} placeholder="GHS-2025-001"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Roll Number *</label>
+                <input value={form.roll_no} onChange={e=>setForm(p=>({...p,roll_no:e.target.value}))} placeholder="01"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Full Name *</label>
+                <input value={form.full_name} onChange={e=>setForm(p=>({...p,full_name:e.target.value}))} placeholder="Muhammad Ali"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Father's Name</label>
+                <input value={form.father_name} onChange={e=>setForm(p=>({...p,father_name:e.target.value}))} placeholder="Father's full name"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Phone</label>
+                <input value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))} placeholder="0300-0000000"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Admitted Year</label>
+                <input value={form.admitted_year} onChange={e=>setForm(p=>({...p,admitted_year:e.target.value}))} placeholder="2024"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Address</label>
+                <input value={form.address} onChange={e=>setForm(p=>({...p,address:e.target.value}))} placeholder="Village/Town"
+                  className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
+              </div>
 
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Class *</label>
