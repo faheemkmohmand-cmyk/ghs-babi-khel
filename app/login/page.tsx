@@ -31,12 +31,13 @@ export default function LoginPage() {
 
       let role = 'student'
       try {
-        const { data: profile } = await (supabase as any)
-          .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
+        const { data: profile } = await supabase
+          .from('profiles').select('role').eq('id', data.user.id).maybeSingle() as any
         if (profile?.role) role = profile.role
       } catch (_) {}
 
-      window.location.href = '/'
+      // Redirect based on role
+      window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
     } catch (_) {
       setError('Something went wrong. Please try again.')
@@ -90,31 +91,19 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  autoComplete="email"
-                  disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
-                />
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                  placeholder="you@email.com" autoComplete="email" disabled={loading}
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
                 <div className="relative">
-                  <input
-                    type={showPass ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Your password"
-                    autoComplete="current-password"
-                    disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
-                  />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
+                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                    placeholder="Your password" autoComplete="current-password" disabled={loading}
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
+                  <button type="button" onClick={()=>setShowPass(v=>!v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">
-                    {showPass ? 'Hide' : 'Show'}
+                    {showPass?'Hide':'Show'}
                   </button>
                 </div>
               </div>
