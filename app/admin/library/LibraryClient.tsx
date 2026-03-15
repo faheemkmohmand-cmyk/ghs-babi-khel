@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','English','Urdu','Islamiat','Pakistan Studies','Computer Science','General Science','Social Studies','History','Geography','Arabic']
 const CLASSES = ['All','6','7','8','9','10']
@@ -16,6 +15,8 @@ type Student = { id:string; full_name:string; class:string; section:string; roll
 const emptyBook = { title:'', author:'', subject:'Mathematics', class:'9', type:'textbook', total_copies:1, available_copies:1, isbn:'', description:'', added_year:new Date().getFullYear().toString() }
 
 export default function LibraryClient({ books:initBooks, issues:initIssues, students }: { books:Book[]; issues:Issue[]; students:Student[] }) {
+  const supabase = createClient()
+
   const [books, setBooks] = useState<Book[]>(initBooks)
   const [issues, setIssues] = useState<Issue[]>(initIssues)
   const [tab, setTab] = useState<'books'|'issues'>('books')

@@ -1,7 +1,9 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday']
 const CLASSES = ['6','7','8','9','10']
@@ -21,13 +23,14 @@ type Slot = { id:string; class:string; section:string; day:string; period:number
 type Teacher = { id:string; full_name:string; subject:string }
 
 export default function TimetableClient({ initialSlots, teachers }: { initialSlots:Slot[]; teachers:Teacher[] }) {
+  const supabase = createClient()
+
   const [slots, setSlots] = useState<Slot[]>(initialSlots)
   const [selClass, setSelClass] = useState('9')
   const [selSection, setSelSection] = useState('A')
   const [editSlot, setEditSlot] = useState<{day:string;period:number}|null>(null)
   const [form, setForm] = useState({ subject:'', teacher_id:'' })
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   const getSlot = (day:string, period:number) =>
     slots.find(s => s.class===selClass && s.section===selSection && s.day===day && s.period===period)

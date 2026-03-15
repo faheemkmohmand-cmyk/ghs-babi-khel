@@ -1,19 +1,22 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
 
 type Notice = { id:string; title:string; content:string; type:string; date:string; posted_by:string; important:boolean; audience:string; published:boolean; created_at:string }
 const emptyForm = { title:'', content:'', type:'general', date:new Date().toISOString().split('T')[0], posted_by:'School Administration', important:false, audience:'all', published:true }
 const typeColors: Record<string,string> = { exam:'bg-red-500', holiday:'bg-sky-500', event:'bg-green-600', general:'bg-amber-500' }
 
 export default function NoticesClient({ initialNotices }: { initialNotices: Notice[] }) {
+  const supabase = createClient()
+
   const [notices, setNotices] = useState<Notice[]>(initialNotices)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Notice|null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   function openAdd() { setEditing(null); setForm(emptyForm); setShowModal(true) }
   function openEdit(n: Notice) {

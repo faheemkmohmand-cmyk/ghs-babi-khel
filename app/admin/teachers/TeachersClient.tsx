@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const SUBJECTS = ['Mathematics','Physics','Chemistry','Biology','English','Urdu','Islamiat','Pakistan Studies','Computer Science','History','Geography','Arabic','Physical Education','Art','General Science']
 const DEPTS = ['Science','Arts','Languages','Islamic Studies','Physical Education','Computer','General']
@@ -17,6 +16,8 @@ type Teacher = {
 const emptyForm = { full_name:'', subject:'Mathematics', department:'Science', role:'Subject Teacher', qualification:'', experience_years:0, phone:'', email:'', joined_year:new Date().getFullYear().toString(), status:'active', bio:'' }
 
 export default function TeachersClient({ initialTeachers }: { initialTeachers: Teacher[] }) {
+  const supabase = createClient()
+
   const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)

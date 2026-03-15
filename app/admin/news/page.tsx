@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import AdminLayout from '@/components/admin/AdminLayout'
 import NewsClient from './NewsClient'
 
-const supabase = createClient()
 export default function Page() {
   const [adminName, setAdminName] = useState('Admin')
   const [data, setData]           = useState<any[]>([])
@@ -13,6 +12,7 @@ export default function Page() {
   const [schoolInfo, setSchoolInfo] = useState<any>(null)
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()

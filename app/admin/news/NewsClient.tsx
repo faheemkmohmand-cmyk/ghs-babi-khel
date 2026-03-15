@@ -4,13 +4,14 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const CATEGORIES = ['Academic','Sports','Events','Achievement','General','Announcement','Science']
 type Article = { id:string; title:string; content:string; category:string; image_url?:string; date:string; author:string; featured:boolean; published:boolean; created_at:string }
 const emptyForm = { title:'', content:'', category:'General', date:new Date().toISOString().split('T')[0], author:'School Administration', featured:false, published:true }
 
 export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
+  const supabase = createClient()
+
   const [news, setNews] = useState<Article[]>(initialNews)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Article|null>(null)

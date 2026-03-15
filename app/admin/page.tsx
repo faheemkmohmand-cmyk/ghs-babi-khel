@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-const supabase = createClient()
 
 export default function AdminDashboard() {
   const [profile, setProfile]         = useState<any>(null)
@@ -17,6 +16,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
 

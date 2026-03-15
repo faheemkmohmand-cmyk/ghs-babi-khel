@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const CATEGORIES = ['Academic','Sports','Arts','Science','Debate','Community','Technology','Other']
 const LEVELS = ['School','District','Provincial','National','International']
@@ -21,6 +20,8 @@ const emptyForm = {
 }
 
 export default function AchievementsClient({ initialAchievements }: { initialAchievements:Achievement[] }) {
+  const supabase = createClient()
+
   const [items, setItems] = useState<Achievement[]>(initialAchievements)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Achievement|null>(null)

@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const SUBJECTS_BY_CLASS: Record<string,string[]> = {
   '6':  ['Urdu','English','Mathematics','General Science','Social Studies','Islamiat'],
@@ -31,6 +30,8 @@ type Result = {
 type Student = { id:string; full_name:string; class:string; section:string; roll_no:string }
 
 export default function ResultsClient({ initialResults, students }: { initialResults:Result[]; students:Student[] }) {
+  const supabase = createClient()
+
   const [results, setResults]     = useState<Result[]>(initialResults)
   const [showModal, setShowModal] = useState(false)
   const [filterClass, setFilterClass] = useState('')

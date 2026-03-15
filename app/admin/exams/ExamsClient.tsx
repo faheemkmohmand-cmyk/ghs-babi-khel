@@ -1,7 +1,9 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
 
 const CLASSES = ['6','7','8','9','10']
 type ExamDay = { date:string; subject:string; classes:string }
@@ -11,13 +13,14 @@ const statusColors: Record<string,string> = { upcoming:'bg-blue-50 text-blue-700
 const typeLabels: Record<string,string> = { monthly:'Monthly Test', halfyearly:'Half-Yearly', board:'Board Exam', annual:'Annual Exam' }
 
 export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
+  const supabase = createClient()
+
   const [exams, setExams] = useState<Exam[]>(initialExams)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Exam|null>(null)
   const [form, setForm] = useState(emptyForm)
   const [scheduleRows, setScheduleRows] = useState<ExamDay[]>([{ date:'', subject:'', classes:'' }])
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   function openAdd() {
     setEditing(null)
@@ -36,7 +39,11 @@ export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
   }
   function addRow() { setScheduleRows(p => [...p, { date:'', subject:'', classes:'' }]) }
   function updateRow(i:number, k:keyof ExamDay, v:string) {
-    setScheduleRows(p => p.map((r,idx) => idx===i ? {...r,[k]:v} : r))
+    setScheduleRows(p => {
+      const next = [...p]
+      next[i] = { ...next[i], [k]: v }
+      return next
+    })
   }
   function removeRow(i:number) { setScheduleRows(p => p.filter((_,idx)=>idx!==i)) }
 
@@ -225,13 +232,13 @@ export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
                 </div>
                 <div className="space-y-2">
                   {scheduleRows.map((row,i)=>(
-                    <div key={i} className="grid grid-cols-3 gap-2 items-center">
-                      <input type="date" value={row.date} onChange={e=>updateRow(i,'date',e.target.value)}
+                    <div key={`row-${i}`} className="grid grid-cols-3 gap-2 items-center">
+                      <input type="date" defaultValue={row.date} onBlur={e=>updateRow(i,'date',e.target.value)}
                         className="border-2 border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-green-500" />
-                      <input value={row.subject} onChange={e=>updateRow(i,'subject',e.target.value)} placeholder="Subject name"
+                      <input defaultValue={row.subject} onBlur={e=>updateRow(i,'subject',e.target.value)} placeholder="Subject name"
                         className="border-2 border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-green-500" />
                       <div className="flex gap-1.5">
-                        <input value={row.classes} onChange={e=>updateRow(i,'classes',e.target.value)} placeholder="9,10 or All"
+                        <input defaultValue={row.classes} onBlur={e=>updateRow(i,'classes',e.target.value)} placeholder="9,10 or All"
                           className="flex-1 border-2 border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-green-500" />
                         <button onClick={()=>removeRow(i)} className="text-red-400 hover:text-red-600 px-2 text-sm">✕</button>
                       </div>

@@ -38,8 +38,8 @@ export default function LoginPage() {
         if (profile?.role) role = profile.role
       } catch (_) {}
 
-      // Small wait to ensure localStorage is written before redirect
-      await new Promise(r => setTimeout(r, 300))
+      // Wait for cookie to be written then redirect
+      await new Promise(r => setTimeout(r, 500))
       window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
     } catch (_) {
@@ -50,12 +50,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
+
+      {/* Left branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none"
           style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.04) 1px,transparent 1px)',backgroundSize:'50px 50px'}}/>
-        <div className="absolute top-0 left-0 w-96 h-96 bg-green-900/15 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"/>
         <div className="relative z-10 text-center max-w-sm">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl ring-8 ring-green-400/10">🏫</div>
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl">🏫</div>
           <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
           <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
           <div className="grid grid-cols-2 gap-3 text-left">
@@ -75,6 +76,7 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Right form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
@@ -102,7 +104,7 @@ export default function LoginPage() {
                   placeholder="you@email.com"
                   autoComplete="email"
                   disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
                 />
               </div>
               <div>
@@ -115,16 +117,16 @@ export default function LoginPage() {
                     placeholder="Your password"
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
                   />
                   <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors text-sm">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold transition-colors">
                     {showPass ? 'Hide' : 'Show'}
                   </button>
                 </div>
               </div>
               <button type="submit" disabled={loading}
-                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-2">
+                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg mt-2">
                 {loading
                   ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Signing in...</>
                   : <><span>🚀</span>Sign In</>}
@@ -134,9 +136,9 @@ export default function LoginPage() {
             <div className="mt-6 pt-5 border-t border-white/8 space-y-3 text-center text-sm">
               <p className="text-white/35">
                 No account?{' '}
-                <Link href="/signup" className="text-green-400 font-bold hover:text-green-300 transition-colors">Create one →</Link>
+                <Link href="/signup" className="text-green-400 font-bold hover:text-green-300">Create one →</Link>
               </p>
-              <Link href="/" className="block text-white/20 text-xs hover:text-white/40 transition-colors">← Back to School Website</Link>
+              <Link href="/" className="block text-white/20 text-xs hover:text-white/40">← Back to School Website</Link>
             </div>
           </div>
         </div>

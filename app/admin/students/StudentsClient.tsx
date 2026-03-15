@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 const CLASSES = ['6','7','8','9','10']
 const SECTIONS = ['A','B','C']
@@ -19,6 +18,8 @@ type Student = {
 const empty = { student_id:'', full_name:'', father_name:'', class:'9', section:'A', roll_no:'', gender:'Male', phone:'', address:'', admitted_year:new Date().getFullYear().toString(), status:'active' }
 
 export default function StudentsClient({ initialStudents }: { initialStudents: Student[] }) {
+  const supabase = createClient()
+
   const [students, setStudents] = useState<Student[]>(initialStudents)
   const [search, setSearch] = useState('')
   const [filterClass, setFilterClass] = useState('')

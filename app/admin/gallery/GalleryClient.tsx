@@ -4,12 +4,13 @@ import { createClient } from '@/lib/supabase/client'
 
 import toast from 'react-hot-toast'
 
-const supabase = createClient()
 
 type Album = { id:string; title:string; description?:string; cover_url?:string; date?:string; category?:string; created_at:string }
 type Photo = { id:string; album_id:string; url:string; caption?:string; created_at:string }
 
 export default function GalleryClient({ initialAlbums, initialPhotos }: { initialAlbums:Album[]; initialPhotos:Photo[] }) {
+  const supabase = createClient()
+
   const [albums, setAlbums] = useState<Album[]>(initialAlbums)
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos)
   const [selAlbum, setSelAlbum] = useState<Album|null>(null)

@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
 
 type Student = { id:string; full_name:string; class:string; section:string; roll_no:string; photo_url?:string }
 type AttendanceRecord = { id:string; student_id:string; date:string; status:string; class:string; section:string }
@@ -16,15 +18,16 @@ const STATUS_COLORS: Record<StatusType,string> = {
 const STATUS_ICONS: Record<StatusType,string> = { present:'✅', absent:'❌', late:'⏰', leave:'🏖️' }
 
 export default function AttendanceClient({ students, initialAttendance, today }: { students:Student[]; initialAttendance:AttendanceRecord[]; today:string }) {
+  const supabase = createClient()
+
   const [date, setDate] = useState(today)
   const [selClass, setSelClass] = useState('')
   const [selSection, setSelSection] = useState('A')
   const [attendance, setAttendance] = useState<Record<string,StatusType>>({})
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
-  const classes = [...new Set(students.map(s=>s.class))].sort()
+  const classes = Array.from(new Set(students.map(s=>s.class))).sort()
   const classStudents = students.filter(s => (!selClass || s.class === selClass) && s.section === selSection)
   const presentCount = Object.values(attendance).filter(v=>v==='present').length
   const absentCount = Object.values(attendance).filter(v=>v==='absent').length

@@ -1,21 +1,13 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
-let client: any = null
+// Singleton - only one instance ever created
+let browserClient: ReturnType<typeof createBrowserClient> | null = null
 
 export function createClient() {
-  if (client) return client
-  client = createSupabaseClient(
+  if (browserClient) return browserClient
+  browserClient = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: true,
-        storageKey: 'ghs-babi-khel-auth',
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      }
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  return client
+  return browserClient
 }

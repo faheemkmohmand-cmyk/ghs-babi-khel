@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 
 // ← outside component — never re-creates on render
-const supabase = createClient()
 
 type Settings = {
   id: string
@@ -48,6 +47,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
   function set(k: keyof Settings, v: any) {
     setForm(p => ({ ...p, [k]: v }))
   }
+
+  const supabase = createClient()
 
   async function uploadImage(file: File): Promise<string | null> {
     try {
