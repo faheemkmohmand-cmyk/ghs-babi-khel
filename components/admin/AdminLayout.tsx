@@ -23,8 +23,9 @@ const NAV = [
   { icon: '⚙️', label: 'Settings',       href: '/admin/settings' },
 ]
 
-export default function AdminLayout({ adminName, children, logoUrl, schoolName }: { adminName: string; children: React.ReactNode; logoUrl?: string; schoolName?: string }) {
+export default function AdminLayout({ adminName, children }: { adminName: string; children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [logoUrl, setLogoUrl] = useState('')
   const path = usePathname()
   const isActive = (href: string) => href === '/admin' ? path === '/admin' : path.startsWith(href)
 
@@ -32,11 +33,11 @@ export default function AdminLayout({ adminName, children, logoUrl, schoolName }
     <div className="flex flex-col h-full">
       <div className="px-5 py-4 border-b border-white/8 flex-shrink-0">
         <div className="flex items-center gap-3">
-          {logoUrl
-            ? <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg flex-shrink-0"/>
-            : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg flex-shrink-0" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>🏫</div>}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg overflow-hidden" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>
+                {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover"/> : <span className="text-white font-black text-xs">GHS</span>}
+              </div>
           <div>
-            <div className="font-bold text-white text-sm" style={{fontFamily:'Georgia,serif'}}>{schoolName || 'GHS Babi Khel'}</div>
+            <div className="font-bold text-white text-sm" style={{fontFamily:'Georgia,serif'}}>GHS Babi Khel</div>
             <div className="text-green-400 text-xs font-bold">Admin Panel</div>
           </div>
         </div>
@@ -88,7 +89,7 @@ export default function AdminLayout({ adminName, children, logoUrl, schoolName }
         <header className="sticky top-0 z-40 bg-white border-b border-slate-100 h-14 flex items-center px-4 gap-3 shadow-sm">
           <button onClick={() => setMobileOpen(true)} className="lg:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-600 text-xl">☰</button>
           <div className="flex-1" />
-          <a href="/" className="text-xs font-bold text-green-800 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-all flex items-center gap-1">🏫 Main Page</a>
+          <a href="/" target="_blank" className="text-xs font-bold text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg hover:text-green-800 transition-all hidden sm:block">🌐 View Site</a>
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
             <div className="w-6 h-6 rounded-full bg-green-900 flex items-center justify-center text-white text-xs font-black">{adminName?.[0]?.toUpperCase()}</div>
             <span className="text-sm font-semibold text-slate-700 hidden sm:block">{adminName}</span>
