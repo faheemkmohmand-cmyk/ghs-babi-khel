@@ -44,12 +44,12 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
       let image_url = editing?.image_url || null
       if (imgFile) { const url = await uploadImage(tmpId); if (url) image_url = url }
       if (editing) {
-        const { data, error } = await supabase.from('news').update({...form, image_url} as any).eq('id', editing.id).select().single()
+        const { data, error } = await (supabase as any).from('news').update({...form, image_url}).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setNews(prev => prev.map(a => a.id===editing.id ? data : a))
         toast.success('Article updated ✅')
       } else {
-        const { data, error } = await supabase.from('news').insert({...form, image_url} as any).select().single()
+        const { data, error } = await (supabase as any).from('news').insert({...form, image_url}).select().single()
         if (error) { toast.error(error.message); return }
         setNews(prev => [data, ...prev])
         toast.success('Article published ✅')

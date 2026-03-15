@@ -60,12 +60,12 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
       if (photoFile) { const url = await uploadPhoto(tmpId); if (url) photoUrl = url }
 
       if (editing) {
-        const { data, error } = await supabase.from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()} as any).eq('id', editing.id).select().single()
+        const { data, error } = await (supabase as any).from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()}).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setStudents(prev => prev.map(s => s.id === editing.id ? data : s))
         toast.success('Student updated ✅')
       } else {
-        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl} as any).select().single()
+        const { data, error } = await (supabase as any).from('students').insert({...form, photo_url:photoUrl}).select().single()
         if (error) { toast.error(error.message); return }
         setStudents(prev => [data, ...prev])
         toast.success('Student added ✅')

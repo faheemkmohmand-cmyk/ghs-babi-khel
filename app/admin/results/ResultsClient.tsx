@@ -98,7 +98,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
         grade:         calc.grade,
         result:        calc.passed ? 'Pass' : 'Fail',
       }
-      const { data, error } = await supabase.from('results').insert(payload as any).select().single()
+      const { data, error } = await (supabase as any).from('results').insert(payload).select().single()
       if (error) { toast.error(error.message); return }
       setResults(prev => [data, ...prev])
       toast.success(`Result saved for ${selStudent!.full_name} ✅`)

@@ -55,12 +55,12 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
       let photo_url = editing?.photo_url || null
       if (photoFile) { const url = await uploadPhoto(tmpId); if (url) photo_url = url }
       if (editing) {
-        const { data, error } = await supabase.from('achievements').update({...form, photo_url} as any).eq('id', editing.id).select().single()
+        const { data, error } = await (supabase as any).from('achievements').update({...form, photo_url}).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setItems(prev => prev.map(a => a.id===editing.id ? data : a))
         toast.success('Achievement updated ✅')
       } else {
-        const { data, error } = await supabase.from('achievements').insert({...form, photo_url} as any).select().single()
+        const { data, error } = await (supabase as any).from('achievements').insert({...form, photo_url}).select().single()
         if (error) { toast.error(error.message); return }
         setItems(prev => [data, ...prev])
         toast.success('Achievement added ✅')
