@@ -3,136 +3,93 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-
 export default function SignupPage() {
-  const [fullName, setFullName]   = useState('')
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
-  const [confirm, setConfirm]     = useState('')
-  const [showPass, setShowPass]   = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState('')
-  const [done, setDone]           = useState(false)
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
-    const supabase = createClient()
     e.preventDefault()
     setError('')
     if (!fullName.trim()) { setError('Please enter your full name'); return }
-    if (!email.trim())    { setError('Please enter your email'); return }
-    if (!password)        { setError('Please enter a password'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return }
-    if (password !== confirm)  { setError('Passwords do not match'); return }
-
+    if (password !== confirmPass) { setError('Passwords do not match'); return }
     setLoading(true)
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
+      const supabase = createClient()
+      const { data, error: signupError } = await supabase.auth.signUp({
+        email, password,
         options: { data: { full_name: fullName.trim() } }
       })
-      if (signUpError) { setError(signUpError.message); return }
+      if (signupError) { setError(signupError.message); return }
       if (data.user) {
-        await (supabase as any).from('profiles').upsert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: fullName.trim(),
-          role: 'student',
+        await supabase.from('profiles').upsert({
+          id: data.user.id, email,
+          full_name: fullName.trim(), role: 'student'
         })
-        setDone(true)
       }
-    } catch { setError('Something went wrong. Please try again.') }
-    finally { setLoading(false) }
+      setSuccess(true)
+      setTimeout(() => { window.location.href = '/login' }, 2000)
+    } catch (e: any) {
+      setError(e.message)
+    } finally { setLoading(false) }
   }
 
-  if (done) return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-      style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
-      <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-10 max-w-sm w-full text-center">
-        <div className="w-16 h-16 rounded-full bg-green-900 flex items-center justify-center text-3xl mx-auto mb-4">✅</div>
-        <h2 className="font-black text-white text-xl mb-2">Account Created!</h2>
-        <p className="text-white/50 text-sm mb-6">Your account is ready. Click below to sign in.</p>
-        <a href="/login" className="block w-full bg-green-900 hover:bg-green-950 text-white font-bold py-3.5 rounded-xl text-center transition-all">
-          Go to Sign In →
-        </a>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-      style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
-      <div className="absolute inset-0 pointer-events-none"
-        style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.03) 1px,transparent 1px)',backgroundSize:'50px 50px'}}/>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3 shadow-2xl">🏫</div>
-          <h1 className="text-xl font-black text-white" style={{fontFamily:'Georgia,serif'}}>GHS Babi Khel</h1>
-          <p className="text-white/35 text-xs mt-1">School Portal</p>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{background:'linear-gradient(135deg,#020810,#0a1628,#014d26)'}}>
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-800 to-green-400 flex items-center justify-center text-white font-black text-xl mx-auto mb-3">GHS</div>
+          <h1 className="text-white font-black text-xl">GHS Babi Khel</h1>
+          <p className="text-white/40 text-sm">Create Account</p>
         </div>
-
-        <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-7">
-          <h2 className="text-xl font-black text-white mb-1">Create Account</h2>
-          <p className="text-white/35 text-sm mb-6">Join the GHS Babi Khel portal</p>
-
-          {error && (
-            <div className="bg-red-500/15 border border-red-400/30 text-red-300 text-sm font-semibold rounded-xl px-4 py-3 mb-4">
-              ⚠️ {error}
+        <div className="bg-white rounded-3xl p-8 shadow-2xl">
+          <h2 className="font-black text-slate-800 text-2xl mb-1">Sign Up</h2>
+          <p className="text-slate-400 text-sm mb-6">Join GHS Babi Khel Portal</p>
+          {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4"><p className="text-red-600 text-sm font-semibold">{error}</p></div>}
+          {success ? (
+            <div className="text-center py-6">
+              <div className="text-5xl mb-3">✅</div>
+              <p className="font-black text-green-700 text-lg">Account Created!</p>
+              <p className="text-slate-500 text-sm mt-1">Redirecting to login...</p>
             </div>
-          )}
-
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Full Name</label>
-              <input type="text" value={fullName} onChange={e=>setFullName(e.target.value)}
-                placeholder="Your full name" autoComplete="name" disabled={loading}
-                className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
-              <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-                placeholder="you@email.com" autoComplete="email" disabled={loading}
-                className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
-              <div className="relative">
-                <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
-                  placeholder="Min 6 characters" autoComplete="new-password" disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-16 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
-                <button type="button" onClick={()=>setShowPass(v=>!v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-xs font-bold px-1 transition-colors">
-                  {showPass?'Hide':'Show'}
-                </button>
+          ) : (
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Full Name</label>
+                <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="Your full name"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"/>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Confirm Password</label>
-              <input type={showPass?'text':'password'} value={confirm} onChange={e=>setConfirm(e.target.value)}
-                placeholder="Repeat your password" autoComplete="new-password" disabled={loading}
-                className={`w-full bg-white/8 border-2 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none transition-all disabled:opacity-50 ${confirm && confirm!==password ? 'border-red-400/60' : 'border-white/10 focus:border-green-400/50'}`}/>
-              {confirm && confirm !== password && <p className="text-red-400 text-xs mt-1">Passwords do not match</p>}
-            </div>
-
-            <button type="submit" disabled={loading || (!!confirm && confirm !== password)}
-              className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-1">
-              {loading
-                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Creating account...</>
-                : <><span>✨</span>Create Account</>}
-            </button>
-          </form>
-
-          <div className="mt-5 pt-5 border-t border-white/8 text-center text-sm space-y-2">
-            <p className="text-white/35">
-              Already have an account?{' '}
-              <Link href="/login" className="text-green-400 font-bold hover:text-green-300">Sign In →</Link>
-            </p>
-            <Link href="/" className="block text-white/20 text-xs hover:text-white/40 transition-colors">← Back to School Website</Link>
-          </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@email.com"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"/>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Password</label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 characters"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"/>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Confirm Password</label>
+                <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} required placeholder="Repeat password"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-500"/>
+              </div>
+              <button type="submit" disabled={loading}
+                className="w-full bg-green-900 hover:bg-green-800 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-base transition-all flex items-center justify-center gap-2">
+                {loading && <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
+                {loading ? 'Creating...' : 'Create Account'}
+              </button>
+            </form>
+          )}
+          <p className="text-center text-slate-400 text-sm mt-5">
+            Already have an account? <Link href="/login" className="text-green-700 font-bold hover:underline">Sign In</Link>
+          </p>
+          <Link href="/" className="block text-center text-slate-300 text-xs mt-2 hover:text-slate-500">Back to website</Link>
         </div>
       </div>
     </div>
