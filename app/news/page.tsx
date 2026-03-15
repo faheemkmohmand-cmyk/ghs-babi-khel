@@ -3,8 +3,8 @@ import Link from 'next/link'
 
 export default async function NewsPage() {
   const supabase = createClient()
-  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: articles } = await (supabase as any).from('news').select('*').eq('published',true).order('date',{ascending:false})
+  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle() as any
+  const { data: articles } = await supabase.from('news').select('*').eq('published',true).order('date',{ascending:false})
   const featured = articles?.find(a=>a.featured)
   const rest = articles?.filter(a=>!a.featured)||[]
 

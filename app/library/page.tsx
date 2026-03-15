@@ -3,8 +3,8 @@ import Link from 'next/link'
 
 export default async function LibraryPage() {
   const supabase = createClient()
-  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: books } = await (supabase as any).from('books').select('*').order('subject').order('title')
+  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle() as any
+  const { data: books } = await supabase.from('books').select('*').order('subject').order('title')
 
   const subjects = (books?.map(b=>b.subject).filter((v:any,i:number,a:any[])=>a.indexOf(v)===i)) as string[]
   const stats = {

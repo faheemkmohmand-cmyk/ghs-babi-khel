@@ -19,7 +19,7 @@ export default function Page() {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user ?? null
       if (!user) { window.location.href = '/login'; return }
-      const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
+      const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle() as any
       if (!p || p.role !== 'admin') { window.location.href = '/dashboard'; return }
       setAdminName(p.full_name || 'Admin')
       const [{ data: b }, { data: i }, { data: s }] = await Promise.all([
@@ -30,7 +30,7 @@ export default function Page() {
       setBooks(b || [])
       setIssues(i || [])
       setStudents(s || [])
-      const { data: sett } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+      const { data: sett } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle() as any
       setSchoolInfo(sett)
       setReady(true)
     }

@@ -3,8 +3,8 @@ import Link from 'next/link'
 
 export default async function NoticesPage() {
   const supabase = createClient()
-  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: notices } = await (supabase as any).from('notices').select('*').eq('published',true).order('date',{ascending:false})
+  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle() as any
+  const { data: notices } = await supabase.from('notices').select('*').eq('published',true).order('date',{ascending:false})
   const typeColors: Record<string,string> = { exam:'bg-red-500', holiday:'bg-sky-500', event:'bg-green-600', general:'bg-amber-500' }
 
   return (

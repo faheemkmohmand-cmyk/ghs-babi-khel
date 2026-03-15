@@ -7,9 +7,9 @@ export default async function HomePage() {
 
   try {
     const supabase = createClient()
-    const { data: s } = await (supabase as any).from('school_settings').select('*').limit(1).maybeSingle()
+    const { data: s } = await supabase.from('school_settings').select('*').limit(1).maybeSingle() as any
     settings = s
-    const { data: n } = await (supabase as any).from('notices').select('id,title,type,date,important')
+    const { data: n } = await supabase.from('notices').select('id,title,type,date,important')
       .eq('published', true).order('date', { ascending: false }).limit(5)
     notices = n || []
   } catch (_) {}

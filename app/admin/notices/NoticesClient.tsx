@@ -30,12 +30,12 @@ export default function NoticesClient({ initialNotices }: { initialNotices: Noti
     setSaving(true)
     try {
       if (editing) {
-        const { data, error } = await (supabase as any).from('notices').update(form).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('notices').update(form).eq('id', editing.id).select().single() as any
         if (error) { toast.error(error.message); return }
         setNotices(prev => prev.map(n => n.id === editing.id ? data : n))
         toast.success('Notice updated ✅')
       } else {
-        const { data, error } = await (supabase as any).from('notices').insert(form).select().single()
+        const { data, error } = await supabase.from('notices').insert(form).select().single() as any
         if (error) { toast.error(error.message); return }
         setNotices(prev => [data, ...prev])
         toast.success('Notice posted ✅')
@@ -45,13 +45,13 @@ export default function NoticesClient({ initialNotices }: { initialNotices: Noti
   }
 
   async function togglePublish(n: Notice) {
-    const { data } = await (supabase as any).from('notices').update({ published: !n.published }).eq('id', n.id).select().single()
+    const { data } = await supabase.from('notices').update({ published: !n.published }).eq('id', n.id).select().single() as any
     if (data) { setNotices(prev => prev.map(x => x.id === n.id ? data : x)); toast.success(data.published ? 'Notice published' : 'Notice hidden') }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this notice?')) return
-    await (supabase as any).from('notices').delete().eq('id', id)
+    await supabase.from('notices').delete().eq('id', id)
     setNotices(prev => prev.filter(n => n.id !== id))
     toast.success('Notice deleted')
   }

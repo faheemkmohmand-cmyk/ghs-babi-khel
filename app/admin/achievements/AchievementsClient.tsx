@@ -55,12 +55,12 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
       let photo_url = editing?.photo_url || null
       if (photoFile) { const url = await uploadPhoto(tmpId); if (url) photo_url = url }
       if (editing) {
-        const { data, error } = await (supabase as any).from('achievements').update({...form, photo_url}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('achievements').update({...form, photo_url}).eq('id', editing.id).select().single() as any
         if (error) { toast.error(error.message); return }
         setItems(prev => prev.map(a => a.id===editing.id ? data : a))
         toast.success('Achievement updated ✅')
       } else {
-        const { data, error } = await (supabase as any).from('achievements').insert({...form, photo_url}).select().single()
+        const { data, error } = await supabase.from('achievements').insert({...form, photo_url}).select().single() as any
         if (error) { toast.error(error.message); return }
         setItems(prev => [data, ...prev])
         toast.success('Achievement added ✅')
@@ -71,7 +71,7 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
 
   async function handleDelete(id:string) {
     if (!confirm('Delete this achievement?')) return
-    await (supabase as any).from('achievements').delete().eq('id', id)
+    await supabase.from('achievements').delete().eq('id', id)
     setItems(prev => prev.filter(a => a.id!==id))
     toast.success('Deleted')
   }

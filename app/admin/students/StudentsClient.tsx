@@ -60,12 +60,12 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
       if (photoFile) { const url = await uploadPhoto(tmpId); if (url) photoUrl = url }
 
       if (editing) {
-        const { data, error } = await (supabase as any).from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('students').update({...form, photo_url:photoUrl, updated_at:new Date().toISOString()}).eq('id', editing.id).select().single() as any
         if (error) { toast.error(error.message); return }
         setStudents(prev => prev.map(s => s.id === editing.id ? data : s))
         toast.success('Student updated ✅')
       } else {
-        const { data, error } = await (supabase as any).from('students').insert({...form, photo_url:photoUrl}).select().single()
+        const { data, error } = await supabase.from('students').insert({...form, photo_url:photoUrl}).select().single() as any
         if (error) { toast.error(error.message); return }
         setStudents(prev => [data, ...prev])
         toast.success('Student added ✅')
@@ -76,7 +76,7 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete ${name}? This cannot be undone.`)) return
-    const { error } = await (supabase as any).from('students').delete().eq('id', id)
+    const { error } = await supabase.from('students').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     setStudents(prev => prev.filter(s => s.id !== id))
     toast.success('Student deleted')

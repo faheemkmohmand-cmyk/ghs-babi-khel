@@ -51,12 +51,12 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
       let photoUrl = editing?.photo_url || null
       if (photoFile) { const url = await uploadPhoto(editing?.id || 'new'); if (url) photoUrl = url }
       if (editing) {
-        const { data, error } = await (supabase as any).from('teachers').update({...form, photo_url:photoUrl}).eq('id', editing.id).select().single()
+        const { data, error } = await supabase.from('teachers').update({...form, photo_url:photoUrl}).eq('id', editing.id).select().single() as any
         if (error) { toast.error(error.message); return }
         setTeachers(prev => prev.map(t => t.id === editing.id ? data : t))
         toast.success('Teacher updated ✅')
       } else {
-        const { data, error } = await (supabase as any).from('teachers').insert({...form, photo_url:photoUrl}).select().single()
+        const { data, error } = await supabase.from('teachers').insert({...form, photo_url:photoUrl}).select().single() as any
         if (error) { toast.error(error.message); return }
         setTeachers(prev => [...prev, data])
         toast.success('Teacher added ✅')
@@ -67,7 +67,7 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete ${name}?`)) return
-    await (supabase as any).from('teachers').delete().eq('id', id)
+    await supabase.from('teachers').delete().eq('id', id)
     setTeachers(prev => prev.filter(t => t.id !== id))
     toast.success('Teacher deleted')
   }

@@ -3,12 +3,12 @@ import Link from 'next/link'
 
 export default async function GalleryPage({ searchParams }: { searchParams: { album?:string } }) {
   const supabase = createClient()
-  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: albums } = await (supabase as any).from('gallery_albums').select('*').order('created_at',{ascending:false})
+  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle() as any
+  const { data: albums } = await supabase.from('gallery_albums').select('*').order('created_at',{ascending:false})
   const selAlbumId = searchParams.album
   const selAlbum = albums?.find(a=>a.id===selAlbumId)
   const { data: photos } = selAlbumId
-    ? await (supabase as any).from('gallery_photos').select('*').eq('album_id', selAlbumId).order('created_at')
+    ? await supabase.from('gallery_photos').select('*').eq('album_id', selAlbumId).order('created_at')
     : { data: [] }
 
   return (

@@ -98,7 +98,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
         grade:         calc.grade,
         result:        calc.passed ? 'Pass' : 'Fail',
       }
-      const { data, error } = await (supabase as any).from('results').insert(payload).select().single()
+      const { data, error } = await supabase.from('results').insert(payload).select().single() as any
       if (error) { toast.error(error.message); return }
       setResults(prev => [data, ...prev])
       toast.success(`Result saved for ${selStudent!.full_name} ✅`)
@@ -108,7 +108,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this result?')) return
-    await (supabase as any).from('results').delete().eq('id', id)
+    await supabase.from('results').delete().eq('id', id)
     setResults(prev => prev.filter(r => r.id !== id))
     toast.success('Deleted')
   }

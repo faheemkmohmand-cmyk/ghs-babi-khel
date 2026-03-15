@@ -22,7 +22,7 @@ export default function AdminDashboard() {
       const user = session?.user ?? null
       if (!user) { window.location.href = '/login'; return }
 
-      const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
+      const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle() as any
       if (!profile || profile.role !== 'admin') { window.location.href = '/dashboard'; return }
       setProfile(profile)
 
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
 
       setStats({ students:students||0, teachers:teachers||0, notices:notices||0, books:books||0 })
 
-      const { data: settings } = await supabase.from('school_settings').select('id,total_students,total_teachers,established_year,total_classes').limit(1).maybeSingle()
+      const { data: settings } = await supabase.from('school_settings').select('id,total_students,total_teachers,established_year,total_classes').limit(1).maybeSingle() as any
       setSchoolInfo(settings || { id:'', total_students:450, total_teachers:18, established_year:'1989', total_classes:12 })
       setRecentStudents(recentStudents||[])
       setRecentNotices(recentNotices||[])

@@ -19,7 +19,7 @@ export default function MyAttendancePage() {
       if (!user) { window.location.href = '/login'; return }
       const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
       setProfile(profile)
-      const { data: student } = await supabase.from('students').select('*').eq('user_id', user.id).maybeSingle()
+      const { data: student } = await supabase.from('students').select('*').eq('user_id', user.id).maybeSingle() as any
       setStudent(student)
       if (student) {
         const { data: records } = await supabase.from('attendance').select('*').eq('student_id', student.id).order('date', {ascending:false}).limit(60)
