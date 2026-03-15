@@ -27,7 +27,7 @@ export default function AttendanceClient({ students, initialAttendance, today }:
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const classes = Array.from(new Set(students.map(s=>s.class)) as string[]).sort()
+  const classes = students.map(s=>s.class as string).filter((v,i,a)=>a.indexOf(v)===i).sort()
   const classStudents = students.filter(s => (!selClass || s.class === selClass) && s.section === selSection)
   const presentCount = Object.values(attendance).filter(v=>v==='present').length
   const absentCount = Object.values(attendance).filter(v=>v==='absent').length

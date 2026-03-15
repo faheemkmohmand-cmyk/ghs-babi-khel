@@ -6,7 +6,7 @@ export default async function LibraryPage() {
   const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
   const { data: books } = await (supabase as any).from('books').select('*').order('subject').order('title')
 
-  const subjects = Array.from(new Set(books?.map(b=>b.subject)||[])) as string[]
+  const subjects = (books?.map(b=>b.subject).filter((v:any,i:number,a:any[])=>a.indexOf(v)===i)) as string[]
   const stats = {
     total: books?.length||0,
     textbooks: books?.filter(b=>b.type==='textbook').length||0,

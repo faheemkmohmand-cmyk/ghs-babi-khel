@@ -47,7 +47,7 @@ export default async function AttendancePage() {
             {classes.map(cls => {
               const clsStudents  = students.filter(s => s.class === cls).length
               const clsAtt       = attendance.filter((a:any) => a.class === cls)
-              const totalDays    = clsAtt.length > 0 ? Array.from(new Set(clsAtt.map((a:any) => a.date))).length : 0
+              const totalDays    = clsAtt.length > 0 ? (clsAtt.map((a:any).filter((v:any,i:number,a:any[])=>a.indexOf(v)===i))).length : 0
               const presentCount = clsAtt.filter((a:any) => a.status === 'present').length
               const absentCount  = clsAtt.filter((a:any) => a.status === 'absent').length
               const lateCount    = clsAtt.filter((a:any) => a.status === 'late').length
