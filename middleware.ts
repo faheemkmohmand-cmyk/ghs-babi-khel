@@ -28,17 +28,19 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // This line refreshes the session and writes cookies on every request
-  const { data: { user } } = await supabase.auth.getUser()
+  // Use getSession - reads cookie directly, refreshes if needed, writes updated cookie back
+  await supabase.auth.getSession()
 
   const path = request.nextUrl.pathname
 
-  // Protect /dashboard
+  // Read session AFTER getSession has refreshed it
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
+
   if (path.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Protect /admin
   if (path.startsWith('/admin') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
