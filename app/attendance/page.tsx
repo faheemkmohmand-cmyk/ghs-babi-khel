@@ -2,17 +2,20 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
 export default async function AttendancePage() {
+  let settings: any = null
   let attendance: any[] = []
   let students: any[] = []
+
   try {
     const supabase = createClient()
-    const { data: settings } = await supabase.from('school_settings').select('logo_url').limit(1).maybeSingle()
-    const [{ data: att }, { data: stu }] = await Promise.all([
+    const [{ data: s }, { data: att }, { data: stu }] = await Promise.all([
+      supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle(),
       supabase.from('attendance').select('*').order('date', { ascending: false }),
-      supabase.from('students').select('id,full_name,class,section').eq('status','active'),
+      supabase.from('students').select('id,full_name,class,section').eq('status', 'active'),
     ])
+    settings  = s
     attendance = att || []
-    students = stu || []
+    students   = stu || []
   } catch (_) {}
 
   const classes = ['6','7','8','9','10']
@@ -24,14 +27,16 @@ export default async function AttendancePage() {
           {settings?.logo_url
             ? <img src={settings.logo_url} alt="Logo" className="w-8 h-8 rounded-full object-cover"/>
             : <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{background:'linear-gradient(135deg,#014d26,#4ade80)'}}>🏫</div>}
-          <span className="font-bold text-sm">GHS Babi Khel</span>
+          <span className="font-bold text-sm">{settings?.short_name || 'GHS Babi Khel'}</span>
         </Link>
         <span className="text-white/30 ml-2">/ Attendance</span>
         <Link href="/" className="ml-auto text-white/50 hover:text-white text-sm">← Home</Link>
       </nav>
+
       <div className="max-w-5xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-black text-slate-800 mb-2" style={{fontFamily:'Georgia,serif'}}>✅ Attendance</h1>
         <p className="text-slate-500 mb-8">Class-wise attendance summary — GHS Babi Khel</p>
+
         {attendance.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-slate-100">
             <div className="text-5xl mb-3">📋</div>
@@ -40,14 +45,14 @@ export default async function AttendancePage() {
         ) : (
           <div className="space-y-6">
             {classes.map(cls => {
-              const clsStudents = students.filter(s => s.class === cls).length
-              const clsAtt = attendance.filter((a:any) => a.class === cls)
-              const totalDays = clsAtt.length > 0 ? Array.from(new Set(clsAtt.map((a:any) => a.date))).length : 0
+              const clsStudents  = students.filter(s => s.class === cls).length
+              const clsAtt       = attendance.filter((a:any) => a.class === cls)
+              const totalDays    = clsAtt.length > 0 ? Array.from(new Set(clsAtt.map((a:any) => a.date))).length : 0
               const presentCount = clsAtt.filter((a:any) => a.status === 'present').length
               const absentCount  = clsAtt.filter((a:any) => a.status === 'absent').length
               const lateCount    = clsAtt.filter((a:any) => a.status === 'late').length
               if (clsAtt.length === 0) return null
-              const pct = clsAtt.length > 0 ? Math.round((presentCount / clsAtt.length) * 100) : 0
+              const pct = Math.round((presentCount / clsAtt.length) * 100)
               return (
                 <div key={cls} className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">

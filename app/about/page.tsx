@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default async function AboutPage() {
   const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('*').single()
+  const { data: settings } = await supabase.from('school_settings').select('*').limit(1).maybeSingle()
   const { data: teachers } = await supabase.from('teachers').select('full_name,subject,role,photo_url,qualification').eq('status','active').order('full_name').limit(8)
   const { data: achievements } = await supabase.from('achievements').select('*').eq('featured',true).limit(4)
 

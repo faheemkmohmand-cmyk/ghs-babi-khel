@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 export default async function ResultsPage() {
   let results: any[] = []
+  let settings: any = null
   try {
     const supabase = createClient()
   const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
