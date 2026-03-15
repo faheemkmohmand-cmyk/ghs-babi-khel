@@ -1,7 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -9,12 +8,6 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
-  const [logoUrl, setLogoUrl]   = useState('')
-
-  useEffect(() => {
-    createClient().from('school_settings').select('logo_url').limit(1).maybeSingle()
-      .then(({ data }) => { if (data?.logo_url) setLogoUrl(data.logo_url) })
-  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -23,7 +16,12 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
+      // Import here — never at module level, never in useEffect
+      const { createBrowserClient } = await import('@supabase/ssr')
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -44,11 +42,10 @@ export default function LoginPage() {
         if (profile?.role) role = profile.role
       } catch (_) {}
 
-      // Wait for cookie to be written then redirect
-      await new Promise(r => setTimeout(r, 500))
+      // Redirect
       window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
-    } catch (_) {
+    } catch (err) {
       setError('Something went wrong. Please try again.')
       setLoading(false)
     }
@@ -62,9 +59,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 pointer-events-none"
           style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.04) 1px,transparent 1px)',backgroundSize:'50px 50px'}}/>
         <div className="relative z-10 text-center max-w-sm">
-          {logoUrl
-            ? <img src={logoUrl} alt="Logo" className="w-28 h-28 rounded-full object-cover mx-auto mb-6 shadow-2xl ring-8 ring-green-400/10"/>
-            : <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl">🏫</div>}
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl">🏫</div>
           <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
           <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
           <div className="grid grid-cols-2 gap-3 text-left">
@@ -87,10 +82,9 @@ export default function LoginPage() {
       {/* Right form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
+
           <div className="lg:hidden text-center mb-8">
-            {logoUrl
-              ? <img src={logoUrl} alt="Logo" className="w-16 h-16 rounded-full object-cover mx-auto mb-3"/>
-              : <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>}
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>
             <div className="font-display text-xl font-black text-white">GHS Babi Khel</div>
           </div>
 
