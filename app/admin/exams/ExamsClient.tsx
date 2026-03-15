@@ -1,7 +1,9 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
+
 
 const CLASSES = ['6','7','8','9','10']
 type ExamDay = { date:string; subject:string; classes:string }
@@ -11,13 +13,14 @@ const statusColors: Record<string,string> = { upcoming:'bg-blue-50 text-blue-700
 const typeLabels: Record<string,string> = { monthly:'Monthly Test', halfyearly:'Half-Yearly', board:'Board Exam', annual:'Annual Exam' }
 
 export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
+  const supabase = createClient()
+
   const [exams, setExams] = useState<Exam[]>(initialExams)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Exam|null>(null)
   const [form, setForm] = useState(emptyForm)
   const [scheduleRows, setScheduleRows] = useState<ExamDay[]>([{ date:'', subject:'', classes:'' }])
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
 
   function openAdd() {
     setEditing(null)
