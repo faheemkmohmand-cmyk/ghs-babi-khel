@@ -6,7 +6,7 @@ export default async function AttendancePage() {
   let students: any[] = []
   try {
     const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+    const { data: settings } = await supabase.from('school_settings').select('logo_url').limit(1).maybeSingle()
     const [{ data: att }, { data: stu }] = await Promise.all([
       supabase.from('attendance').select('*').order('date', { ascending: false }),
       supabase.from('students').select('id,full_name,class,section').eq('status','active'),
