@@ -15,20 +15,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      // getSession first - if session exists (common case: already logged in), use it
-      // If null, it means either not logged in OR session not yet loaded from cookie
-      // We wait for onAuthStateChange to confirm before redirecting
-      let session = (await supabase.auth.getSession()).data.session
-      if (!session) {
-        session = await new Promise(resolve => {
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-            subscription.unsubscribe()
-            resolve(s)
-          })
-          // Timeout after 2s - if still no session, not logged in
-          setTimeout(() => { subscription.unsubscribe(); resolve(null) }, 2000)
-        })
-      }
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session) { window.location.href = '/login'; return }
       const user = session.user
       setUser(user)
