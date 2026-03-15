@@ -3,39 +3,49 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-const supabase = createClient()
-
 export default function LoginPage() {
-  const [email, setEmail]     = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]  = useState(false)
-  const [error, setError]      = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!email || !password) { setError('Please fill in both fields.'); return }
+    if (!email.trim() || !password) { setError('Please fill in both fields.'); return }
     setLoading(true)
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-
-    if (signInError) {
-      setLoading(false)
-      setError('Wrong email or password. Please try again.')
-      return
-    }
-
-    // Get role safely — never crashes
-    let role = 'student'
     try {
-      const { data: profile } = await supabase
-        .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
-      if (profile?.role) role = profile.role
-    } catch (_) {}
+      const supabase = createClient()
 
-    // Hard redirect — guaranteed to work on Vercel
-    window.location.href = role === 'admin' ? '/admin' : '/dashboard'
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+
+      if (signInError) {
+        setError('Wrong email or password. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      // Get role
+      let role = 'student'
+      try {
+        const { data: profile } = await supabase
+          .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
+        if (profile?.role) role = profile.role
+      } catch (_) {}
+
+      // Small wait to ensure localStorage is written before redirect
+      await new Promise(r => setTimeout(r, 300))
+      window.location.href = role === 'admin' ? '/admin' : '/dashboard'
+
+    } catch (_) {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,10 +60,10 @@ export default function LoginPage() {
           <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
           <div className="grid grid-cols-2 gap-3 text-left">
             {[
-              {icon:'🎓',label:'Student Results',sub:'Check your marks'},
-              {icon:'🖼️',label:'Gallery',sub:'Photos & events'},
-              {icon:'📅',label:'Timetable',sub:'Class schedule'},
-              {icon:'📢',label:'Notices',sub:'School updates'},
+              {icon:'🎓', label:'Student Results', sub:'Check your marks'},
+              {icon:'🖼️', label:'Gallery',         sub:'Photos & events'},
+              {icon:'📅', label:'Timetable',       sub:'Class schedule'},
+              {icon:'📢', label:'Notices',         sub:'School updates'},
             ].map(f=>(
               <div key={f.label} className="bg-white/5 border border-white/8 rounded-2xl p-3">
                 <div className="text-xl mb-1">{f.icon}</div>
@@ -85,26 +95,38 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
-                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-                  placeholder="you@email.com" autoComplete="email" disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"/>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  autoComplete="email"
+                  disabled={loading}
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
                 <div className="relative">
-                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
-                    placeholder="Your password" autoComplete="current-password" disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"/>
-                  <button type="button" onClick={()=>setShowPass(v=>!v)}
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Your password"
+                    autoComplete="current-password"
+                    disabled={loading}
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"
+                  />
+                  <button type="button" onClick={() => setShowPass(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors text-sm">
-                    {showPass?'Hide':'Show'}
+                    {showPass ? 'Hide' : 'Show'}
                   </button>
                 </div>
               </div>
               <button type="submit" disabled={loading}
-                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-2">
+                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-2">
                 {loading
-                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Taking you in...</>
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Signing in...</>
                   : <><span>🚀</span>Sign In</>}
               </button>
             </form>
