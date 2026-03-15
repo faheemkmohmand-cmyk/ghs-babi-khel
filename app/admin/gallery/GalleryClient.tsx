@@ -1,9 +1,12 @@
 'use client'
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
 import toast from 'react-hot-toast'
 
-type Album = { id:string; name:string; description?:string; cover_url?:string; event_date?:string; created_at:string }
+const supabase = createClient()
+
+type Album = { id:string; title:string; description?:string; cover_url?:string; date?:string; category?:string; created_at:string }
 type Photo = { id:string; album_id:string; url:string; caption?:string; created_at:string }
 
 export default function GalleryClient({ initialAlbums, initialPhotos }: { initialAlbums:Album[]; initialPhotos:Photo[] }) {
@@ -11,17 +14,16 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos)
   const [selAlbum, setSelAlbum] = useState<Album|null>(null)
   const [showAlbumModal, setShowAlbumModal] = useState(false)
-  const [albumForm, setAlbumForm] = useState({ name:'', description:'', event_date:'' })
+  const [albumForm, setAlbumForm] = useState({ title:'', description:'', date:'', category:'general' })
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
 
   const albumPhotos = photos.filter(p => p.album_id === selAlbum?.id)
 
   async function handleSaveAlbum() {
-    if (!albumForm.name) { toast.error('Album name required'); return }
+    if (!albumForm.title) { toast.error('Album name required'); return }
     setSaving(true)
     try {
       const { data, error } = await supabase.from('gallery_albums').insert(albumForm).select().single()
@@ -29,7 +31,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
       setAlbums(prev => [data, ...prev])
       toast.success('Album created ✅')
       setShowAlbumModal(false)
-      setAlbumForm({ name:'', description:'', event_date:'' })
+      setAlbumForm({ title:'', description:'', date:'', category:'general' })
     } finally { setSaving(false) }
   }
 
@@ -119,10 +121,10 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
                       : <div className="w-full h-full flex items-center justify-center text-3xl text-slate-300">🖼️</div>}
                   </div>
                   <div className="p-3">
-                    <p className="font-black text-slate-800 text-sm truncate">{a.name}</p>
+                    <p className="font-black text-slate-800 text-sm truncate">{a.title}</p>
                     <p className="text-xs text-slate-400">{count} photo{count!==1?'s':''}</p>
-                    {a.event_date && <p className="text-xs text-slate-400">{a.event_date}</p>}
-                    <button onClick={e=>{e.stopPropagation();handleDeleteAlbum(a.id,a.name)}}
+                    {a.date && <p className="text-xs text-slate-400">{a.date}</p>}
+                    <button onClick={e=>{e.stopPropagation();handleDeleteAlbum(a.id,a.title)}}
                       className="mt-2 text-xs text-red-400 hover:text-red-600 font-bold transition-colors">🗑️ Delete</button>
                   </div>
                 </div>
@@ -144,7 +146,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
             <>
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <div>
-                  <h2 className="font-black text-slate-800 text-lg" style={{fontFamily:'Georgia,serif'}}>{selAlbum.name}</h2>
+                  <h2 className="font-black text-slate-800 text-lg" style={{fontFamily:'Georgia,serif'}}>{selAlbum.title}</h2>
                   {selAlbum.description && <p className="text-slate-500 text-sm">{selAlbum.description}</p>}
                 </div>
                 <label className={`cursor-pointer font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all text-sm shadow-md ${uploading?'bg-slate-200 text-slate-500':'bg-amber-500 hover:bg-amber-600 text-white'}`}>
@@ -197,8 +199,8 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Album Name *</label>
-                <input value={albumForm.name} onChange={e=>setAlbumForm(p=>({...p,name:e.target.value}))} placeholder="e.g. Annual Sports Day 2025"
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Album Title *</label>
+                <input value={albumForm.title} onChange={e=>setAlbumForm(p=>({...p,title:e.target.value}))} placeholder="e.g. Annual Function 2025"
                   className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
               </div>
               <div>
@@ -208,7 +210,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
               </div>
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Event Date</label>
-                <input type="date" value={albumForm.event_date} onChange={e=>setAlbumForm(p=>({...p,event_date:e.target.value}))}
+                <input type="date" value={albumForm.date} onChange={e=>setAlbumForm(p=>({...p,date:e.target.value}))}
                   className="w-full border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-500 transition-colors" />
               </div>
             </div>
