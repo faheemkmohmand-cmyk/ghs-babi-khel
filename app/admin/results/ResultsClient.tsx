@@ -39,7 +39,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
   const selStudent = students.find(s=>s.id===selStudentId)
   const subjects = selStudent ? (SUBJECTS_BY_CLASS[selStudent.class] || SUBJECTS_BY_CLASS['9']) : []
 
-  const exams = [...new Set(results.map(r=>r.exam_name))]
+  const exams = Array.from(new Set(results.map(r=>r.exam_name) as string[]))
   const filtered = results.filter(r => (!filterClass||r.class===filterClass) && (!filterExam||r.exam_name===filterExam))
 
   function openAdd() { setSelStudentId(''); setMarks({}); setShowModal(true) }
