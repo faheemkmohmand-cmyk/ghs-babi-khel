@@ -13,8 +13,9 @@ export default function MyAttendancePage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      const user = session.user
       const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
       setProfile(profile)
       const { data: student } = await supabase.from('students').select('*').eq('user_id', user.id).maybeSingle()

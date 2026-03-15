@@ -28,20 +28,16 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Use getSession - reads cookie directly, refreshes if needed, writes updated cookie back
+  // Refresh session cookie on every request — this is what keeps you logged in
   await supabase.auth.getSession()
 
   const path = request.nextUrl.pathname
-
-  // Read session AFTER getSession has refreshed it
   const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user ?? null
 
-  if (path.startsWith('/dashboard') && !user) {
+  if (path.startsWith('/dashboard') && !session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
-
-  if (path.startsWith('/admin') && !user) {
+  if (path.startsWith('/admin') && !session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

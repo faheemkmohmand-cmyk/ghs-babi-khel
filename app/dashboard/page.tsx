@@ -15,8 +15,9 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      const user = session.user
       setUser(user)
       const [{ data: profile }, { data: student }, { data: notices }, { data: exams }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),

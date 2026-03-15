@@ -13,8 +13,9 @@ export default function Page() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { window.location.href = '/login'; return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      const user = session.user
       const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
       if (!p || p.role !== 'admin') { window.location.href = '/dashboard'; return }
       setAdminName(p.full_name || 'Admin')
