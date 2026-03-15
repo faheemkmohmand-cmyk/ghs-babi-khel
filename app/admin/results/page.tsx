@@ -14,9 +14,8 @@ export default function Page() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      // First try getSession (instant, reads cookie) then getUser as fallback
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
+      // Wait for auth to initialize from cookie
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       const { data: p } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle() as any
       if (!p || p.role !== 'admin') { window.location.href = '/dashboard'; return }

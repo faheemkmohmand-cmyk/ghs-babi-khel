@@ -13,9 +13,8 @@ export default function MyAttendancePage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      // First try getSession (instant, reads cookie) then getUser as fallback
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user ?? null
+      // Wait for auth to initialize from cookie
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
       setProfile(profile)

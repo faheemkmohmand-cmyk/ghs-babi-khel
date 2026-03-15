@@ -28,16 +28,18 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session cookie on every request — this is what keeps you logged in
-  await supabase.auth.getSession()
+  // Refresh session on every request - writes updated cookie back to browser
+  await supabase.auth.getUser()
 
   const path = request.nextUrl.pathname
-  const { data: { session } } = await supabase.auth.getSession()
 
-  if (path.startsWith('/dashboard') && !session) {
+  // Only protect /dashboard and /admin - everything else is public
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (path.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  if (path.startsWith('/admin') && !session) {
+  if (path.startsWith('/admin') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
