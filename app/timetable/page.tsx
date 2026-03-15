@@ -24,10 +24,10 @@ const getColor = (sub:string) => subjectColors[sub] || 'bg-slate-50 border-slate
 
 export default async function TimetablePage({ searchParams }: { searchParams: { class?:string; section?:string } }) {
   const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
   const selClass = searchParams.class || '9'
   const selSection = searchParams.section || 'A'
-  const { data: slots } = await supabase.from('timetable')
+  const { data: slots } = await (supabase as any).from('timetable')
     .select('*, teachers(full_name)')
     .eq('class', selClass).eq('section', selSection)
 

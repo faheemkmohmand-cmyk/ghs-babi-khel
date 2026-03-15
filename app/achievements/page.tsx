@@ -3,8 +3,8 @@ import Link from 'next/link'
 
 export default async function AchievementsPage() {
   const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: achievements } = await supabase.from('achievements').select('*').order('date',{ascending:false})
+  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+  const { data: achievements } = await (supabase as any).from('achievements').select('*').order('date',{ascending:false})
   const featured = achievements?.filter(a=>a.featured)||[]
   const rest = achievements?.filter(a=>!a.featured)||[]
 

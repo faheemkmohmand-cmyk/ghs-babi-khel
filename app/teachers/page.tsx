@@ -3,8 +3,8 @@ import Link from 'next/link'
 
 export default async function TeachersPage() {
   const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-  const { data: teachers } = await supabase.from('teachers').select('*').eq('status','active').order('full_name')
+  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+  const { data: teachers } = await (supabase as any).from('teachers').select('*').eq('status','active').order('full_name')
 
   return (
     <div className="min-h-screen bg-slate-50">

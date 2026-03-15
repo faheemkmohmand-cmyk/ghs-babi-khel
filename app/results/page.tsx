@@ -6,8 +6,8 @@ export default async function ResultsPage() {
   let settings: any = null
   try {
     const supabase = createClient()
-  const { data: settings } = await supabase.from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
-    const { data } = await supabase
+  const { data: settings } = await (supabase as any).from('school_settings').select('logo_url,short_name').limit(1).maybeSingle()
+    const { data } = await (supabase as any)
       .from('results').select('*')
       .order('class').order('percentage', { ascending: false })
     results = data || []

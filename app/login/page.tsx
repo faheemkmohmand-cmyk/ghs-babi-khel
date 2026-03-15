@@ -31,7 +31,7 @@ export default function LoginPage() {
 
       let role = 'student'
       try {
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
         if (profile?.role) role = profile.role
       } catch (_) {}

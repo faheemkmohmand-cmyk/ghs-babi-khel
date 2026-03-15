@@ -88,14 +88,14 @@ export default function SettingsClient({ initialSettings }: { initialSettings: S
       const payload = { ...form, updated_at: new Date().toISOString() }
       if (form.id) {
         // Always UPDATE the existing row — never insert
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('school_settings')
           .update(payload)
           .eq('id', form.id)
         if (error) { toast.error(error.message); return }
       } else {
         // No row exists yet — insert once, then save the id so future saves update
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('school_settings')
           .insert({ ...payload })
           .select()

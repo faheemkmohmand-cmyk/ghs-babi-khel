@@ -33,7 +33,7 @@ export default function SignupPage() {
       })
       if (signUpError) { setError(signUpError.message); return }
       if (data.user) {
-        await supabase.from('profiles').upsert({
+        await (supabase as any).from('profiles').upsert({
           id: data.user.id,
           email: data.user.email,
           full_name: fullName.trim(),
