@@ -94,6 +94,11 @@ export default async function HomePage() {
                   📢 Latest Notices
                 </Link>
               </div>
+              <div className="mt-4">
+                <Link href="/dashboard" className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-black px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:-translate-y-0.5 transition-all">
+                  🚀 Go to Dashboard
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 animate-fade-up" style={{animationDelay:'0.15s'}}>
@@ -173,25 +178,6 @@ export default async function HomePage() {
         </section>
       )}
 
-
-      {/* DASHBOARD PORTAL BUTTON */}
-      <section className="max-w-7xl mx-auto px-4 py-10">
-        <div className="bg-gradient-to-br from-slate-800 to-green-900 rounded-3xl p-8 text-center text-white">
-          <div className="text-4xl mb-3">🎓</div>
-          <h2 className="font-display text-2xl font-black mb-2">Student & Admin Portal</h2>
-          <p className="text-white/60 mb-6">Sign in to access your personal dashboard — results, notices, timetable and more</p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/dashboard"
-              className="bg-green-500 hover:bg-green-400 text-white font-black px-8 py-3.5 rounded-2xl text-base transition-all hover:-translate-y-0.5 shadow-lg flex items-center gap-2">
-              🎓 Go to Dashboard
-            </Link>
-            <Link href="/login"
-              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-8 py-3.5 rounded-2xl text-base transition-all flex items-center gap-2">
-              🔑 Sign In
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* PRINCIPAL MESSAGE */}
       {principal && (
