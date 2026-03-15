@@ -108,7 +108,7 @@ export default function ResultsClient({ initialResults, students }: { initialRes
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this result?')) return
-    await supabase.from('results').delete().eq('id', id)
+    await (supabase as any).from('results').delete().eq('id', id)
     setResults(prev => prev.filter(r => r.id !== id))
     toast.success('Deleted')
   }

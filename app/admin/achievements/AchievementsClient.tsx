@@ -71,7 +71,7 @@ export default function AchievementsClient({ initialAchievements }: { initialAch
 
   async function handleDelete(id:string) {
     if (!confirm('Delete this achievement?')) return
-    await supabase.from('achievements').delete().eq('id', id)
+    await (supabase as any).from('achievements').delete().eq('id', id)
     setItems(prev => prev.filter(a => a.id!==id))
     toast.success('Deleted')
   }

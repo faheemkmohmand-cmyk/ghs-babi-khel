@@ -43,7 +43,7 @@ export default function AttendanceClient({ students, initialAttendance, today }:
   async function loadAttendance() {
     if (!selClass) { toast.error('Select a class first'); return }
     setLoading(true)
-    const { data } = await supabase.from('attendance').select('*').eq('date', date).eq('class', selClass).eq('section', selSection)
+    const { data } = await (supabase as any).from('attendance').select('*').eq('date', date).eq('class', selClass).eq('section', selSection)
     const map: Record<string,StatusType> = {}
     data?.forEach(r => { map[r.student_id] = r.status as StatusType })
     // Default all to present if no data
@@ -72,7 +72,7 @@ export default function AttendanceClient({ students, initialAttendance, today }:
         student_id: s.id, date, status: attendance[s.id] || 'present',
         class: s.class, section: s.section,
       }))
-      const { error } = await supabase.from('attendance').upsert(records, { onConflict: 'student_id,date' })
+      const { error } = await (supabase as any).from('attendance').upsert(records, { onConflict: 'student_id,date' })
       if (error) { toast.error(error.message); return }
       toast.success(`✅ Attendance saved for ${classStudents.length} students!`)
     } finally { setSaving(false) }

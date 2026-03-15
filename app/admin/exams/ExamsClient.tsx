@@ -55,12 +55,12 @@ export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
     try {
       const payload = { ...form, schedule: scheduleRows.filter(r=>r.date&&r.subject) }
       if (editing) {
-        const { data, error } = await supabase.from('exams').update(payload).eq('id', editing.id).select().single()
+        const { data, error } = await (supabase as any).from('exams').update(payload).eq('id', editing.id).select().single()
         if (error) { toast.error(error.message); return }
         setExams(prev => prev.map(e => e.id===editing.id ? data : e))
         toast.success('Exam updated ✅')
       } else {
-        const { data, error } = await supabase.from('exams').insert(payload).select().single()
+        const { data, error } = await (supabase as any).from('exams').insert(payload).select().single()
         if (error) { toast.error(error.message); return }
         setExams(prev => [data, ...prev])
         toast.success('Exam schedule created ✅')
@@ -71,13 +71,13 @@ export default function ExamsClient({ initialExams }: { initialExams:Exam[] }) {
 
   async function handleDelete(id:string, name:string) {
     if (!confirm(`Delete "${name}"?`)) return
-    await supabase.from('exams').delete().eq('id', id)
+    await (supabase as any).from('exams').delete().eq('id', id)
     setExams(prev => prev.filter(e=>e.id!==id))
     toast.success('Exam deleted')
   }
 
   async function updateStatus(id:string, status:string) {
-    const { data } = await supabase.from('exams').update({ status }).eq('id', id).select().single()
+    const { data } = await (supabase as any).from('exams').update({ status }).eq('id', id).select().single()
     if (data) { setExams(prev => prev.map(e=>e.id===id?data:e)); toast.success(`Status → ${status}`) }
   }
 

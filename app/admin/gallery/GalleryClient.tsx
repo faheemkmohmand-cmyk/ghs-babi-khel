@@ -27,7 +27,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
     if (!albumForm.title) { toast.error('Album name required'); return }
     setSaving(true)
     try {
-      const { data, error } = await supabase.from('gallery_albums').insert(albumForm).select().single()
+      const { data, error } = await (supabase as any).from('gallery_albums').insert(albumForm).select().single()
       if (error) { toast.error(error.message); return }
       setAlbums(prev => [data, ...prev])
       toast.success('Album created ✅')
@@ -38,8 +38,8 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
 
   async function handleDeleteAlbum(id:string, name:string) {
     if (!confirm(`Delete album "${name}" and all its photos?`)) return
-    await supabase.from('gallery_photos').delete().eq('album_id', id)
-    await supabase.from('gallery_albums').delete().eq('id', id)
+    await (supabase as any).from('gallery_photos').delete().eq('album_id', id)
+    await (supabase as any).from('gallery_albums').delete().eq('id', id)
     setPhotos(prev => prev.filter(p=>p.album_id!==id))
     setAlbums(prev => prev.filter(a=>a.id!==id))
     if (selAlbum?.id===id) setSelAlbum(null)
@@ -58,7 +58,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
       const { error } = await supabase.storage.from('gallery').upload(path, file)
       if (!error) {
         const url = supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl
-        const { data } = await supabase.from('gallery_photos').insert({ album_id: selAlbum.id, url }).select().single()
+        const { data } = await (supabase as any).from('gallery_photos').insert({ album_id: selAlbum.id, url }).select().single()
         if (data) newPhotos.push(data)
       }
       done++
@@ -66,7 +66,7 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
     }
     // Update album cover if no cover yet
     if (newPhotos.length > 0 && !selAlbum.cover_url) {
-      const { data } = await supabase.from('gallery_albums').update({ cover_url: newPhotos[0].url }).eq('id', selAlbum.id).select().single()
+      const { data } = await (supabase as any).from('gallery_albums').update({ cover_url: newPhotos[0].url }).eq('id', selAlbum.id).select().single()
       if (data) { setAlbums(prev => prev.map(a=>a.id===selAlbum.id?data:a)); setSelAlbum(data) }
     }
     setPhotos(prev => [...prev, ...newPhotos])
@@ -77,14 +77,14 @@ export default function GalleryClient({ initialAlbums, initialPhotos }: { initia
 
   async function handleDeletePhoto(id:string, url:string) {
     if (!confirm('Delete this photo?')) return
-    await supabase.from('gallery_photos').delete().eq('id', id)
+    await (supabase as any).from('gallery_photos').delete().eq('id', id)
     setPhotos(prev => prev.filter(p=>p.id!==id))
     toast.success('Photo deleted')
   }
 
   async function setCover(photo:Photo) {
     if (!selAlbum) return
-    const { data } = await supabase.from('gallery_albums').update({ cover_url: photo.url }).eq('id', selAlbum.id).select().single()
+    const { data } = await (supabase as any).from('gallery_albums').update({ cover_url: photo.url }).eq('id', selAlbum.id).select().single()
     if (data) { setAlbums(prev => prev.map(a=>a.id===selAlbum.id?data:a)); setSelAlbum(data); toast.success('Cover photo set ✅') }
   }
 

@@ -20,10 +20,10 @@ export default function DashboardPage() {
       const user = session.user
       setUser(user)
       const [{ data: profile }, { data: student }, { data: notices }, { data: exams }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-        supabase.from('students').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('notices').select('id,title,type,date,important').eq('published', true).order('date', { ascending: false }).limit(5),
-        supabase.from('exams').select('id,name,start_date,status').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(4),
+        (supabase as any).from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        (supabase as any).from('students').select('*').eq('user_id', user.id).maybeSingle(),
+        (supabase as any).from('notices').select('id,title,type,date,important').eq('published', true).order('date', { ascending: false }).limit(5),
+        (supabase as any).from('exams').select('id,name,start_date,status').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(4),
       ])
       setProfile(profile)
       setStudent(student)

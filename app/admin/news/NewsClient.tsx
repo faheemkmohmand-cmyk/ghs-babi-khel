@@ -60,13 +60,13 @@ export default function NewsClient({ initialNews }: { initialNews:Article[] }) {
 
   async function handleDelete(id:string) {
     if (!confirm('Delete this article?')) return
-    await supabase.from('news').delete().eq('id', id)
+    await (supabase as any).from('news').delete().eq('id', id)
     setNews(prev => prev.filter(a=>a.id!==id))
     toast.success('Article deleted')
   }
 
   async function togglePublish(a:Article) {
-    const { data } = await supabase.from('news').update({published:!a.published}).eq('id',a.id).select().single()
+    const { data } = await (supabase as any).from('news').update({published:!a.published}).eq('id',a.id).select().single()
     if (data) { setNews(prev=>prev.map(x=>x.id===a.id?data:x)); toast.success(data.published?'Published':'Hidden') }
   }
 

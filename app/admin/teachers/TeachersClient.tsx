@@ -67,7 +67,7 @@ export default function TeachersClient({ initialTeachers }: { initialTeachers: T
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete ${name}?`)) return
-    await supabase.from('teachers').delete().eq('id', id)
+    await (supabase as any).from('teachers').delete().eq('id', id)
     setTeachers(prev => prev.filter(t => t.id !== id))
     toast.success('Teacher deleted')
   }

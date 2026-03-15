@@ -76,7 +76,7 @@ export default function StudentsClient({ initialStudents }: { initialStudents: S
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete ${name}? This cannot be undone.`)) return
-    const { error } = await supabase.from('students').delete().eq('id', id)
+    const { error } = await (supabase as any).from('students').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     setStudents(prev => prev.filter(s => s.id !== id))
     toast.success('Student deleted')

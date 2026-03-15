@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       if (!session) { window.location.href = '/login'; return }
       const user = session.user
 
-      const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
+      const { data: profile } = await (supabase as any).from('profiles').select('role,full_name').eq('id', user.id).maybeSingle()
       if (!profile || profile.role !== 'admin') { window.location.href = '/dashboard'; return }
       setProfile(profile)
 
@@ -34,18 +34,18 @@ export default function AdminDashboard() {
         { data: recentNotices },
         { data: upcomingExams },
       ] = await Promise.all([
-        supabase.from('students').select('*',{count:'exact',head:true}).eq('status','active'),
-        supabase.from('teachers').select('*',{count:'exact',head:true}).eq('status','active'),
-        supabase.from('notices').select('*',{count:'exact',head:true}).eq('published',true),
-        supabase.from('books').select('*',{count:'exact',head:true}),
-        supabase.from('students').select('id,full_name,class,section,roll_no').order('created_at',{ascending:false}).limit(6),
-        supabase.from('notices').select('id,title,type,important,date').order('date',{ascending:false}).limit(5),
-        supabase.from('exams').select('id,name,start_date,type').eq('status','upcoming').order('start_date',{ascending:true}).limit(3),
+        (supabase as any).from('students').select('*',{count:'exact',head:true}).eq('status','active'),
+        (supabase as any).from('teachers').select('*',{count:'exact',head:true}).eq('status','active'),
+        (supabase as any).from('notices').select('*',{count:'exact',head:true}).eq('published',true),
+        (supabase as any).from('books').select('*',{count:'exact',head:true}),
+        (supabase as any).from('students').select('id,full_name,class,section,roll_no').order('created_at',{ascending:false}).limit(6),
+        (supabase as any).from('notices').select('id,title,type,important,date').order('date',{ascending:false}).limit(5),
+        (supabase as any).from('exams').select('id,name,start_date,type').eq('status','upcoming').order('start_date',{ascending:true}).limit(3),
       ])
 
       setStats({ students:students||0, teachers:teachers||0, notices:notices||0, books:books||0 })
 
-      const { data: settings } = await supabase.from('school_settings').select('id,total_students,total_teachers,established_year,total_classes').limit(1).maybeSingle()
+      const { data: settings } = await (supabase as any).from('school_settings').select('id,total_students,total_teachers,established_year,total_classes').limit(1).maybeSingle()
       setSchoolInfo(settings || { id:'', total_students:450, total_teachers:18, established_year:'1989', total_classes:12 })
       setRecentStudents(recentStudents||[])
       setRecentNotices(recentNotices||[])
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
     setSavingInfo(true)
     try {
       if (schoolInfo.id) {
-        await supabase.from('school_settings').update({
+        await (supabase as any).from('school_settings').update({
           total_students: Number(schoolInfo.total_students),
           total_teachers: Number(schoolInfo.total_teachers),
           established_year: schoolInfo.established_year,

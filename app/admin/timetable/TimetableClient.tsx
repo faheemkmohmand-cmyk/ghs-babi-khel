@@ -55,11 +55,11 @@ export default function TimetableClient({ initialSlots, teachers }: { initialSlo
       }
       const existing = getSlot(editSlot!.day, editSlot!.period)
       if (existing) {
-        const { data, error } = await supabase.from('timetable').update(payload).eq('id', existing.id).select().single()
+        const { data, error } = await (supabase as any).from('timetable').update(payload).eq('id', existing.id).select().single()
         if (error) { toast.error(error.message); return }
         setSlots(prev => prev.map(s => s.id === existing.id ? data : s))
       } else {
-        const { data, error } = await supabase.from('timetable').insert(payload).select().single()
+        const { data, error } = await (supabase as any).from('timetable').insert(payload).select().single()
         if (error) { toast.error(error.message); return }
         setSlots(prev => [...prev, data])
       }
@@ -71,7 +71,7 @@ export default function TimetableClient({ initialSlots, teachers }: { initialSlo
   async function handleClear() {
     const existing = getSlot(editSlot!.day, editSlot!.period)
     if (!existing) { setEditSlot(null); return }
-    await supabase.from('timetable').delete().eq('id', existing.id)
+    await (supabase as any).from('timetable').delete().eq('id', existing.id)
     setSlots(prev => prev.filter(s => s.id !== existing.id))
     toast.success('Period cleared')
     setEditSlot(null)
@@ -84,9 +84,9 @@ export default function TimetableClient({ initialSlots, teachers }: { initialSlo
     try {
       for (const otherDay of DAYS.filter(d => d !== fromDay)) {
         const records = daySlots.map(s => ({ ...s, day: otherDay, id: undefined }))
-        await supabase.from('timetable').upsert(records, { onConflict: 'class,section,day,period' })
+        await (supabase as any).from('timetable').upsert(records, { onConflict: 'class,section,day,period' })
       }
-      const { data } = await supabase.from('timetable').select('*').eq('class', selClass).eq('section', selSection)
+      const { data } = await (supabase as any).from('timetable').select('*').eq('class', selClass).eq('section', selSection)
       if (data) setSlots(prev => [...prev.filter(s => !(s.class===selClass && s.section===selSection)), ...data])
       toast.success('Schedule copied to all days ✅')
     } finally { setSaving(false) }
