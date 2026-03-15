@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -16,13 +17,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Import here — never at module level, never in useEffect
-      const { createBrowserClient } = await import('@supabase/ssr')
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-
+      const supabase = createClient()
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -34,7 +29,6 @@ export default function LoginPage() {
         return
       }
 
-      // Get role
       let role = 'student'
       try {
         const { data: profile } = await supabase
@@ -42,10 +36,9 @@ export default function LoginPage() {
         if (profile?.role) role = profile.role
       } catch (_) {}
 
-      // Redirect
       window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
-    } catch (err) {
+    } catch (_) {
       setError('Something went wrong. Please try again.')
       setLoading(false)
     }
@@ -53,8 +46,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
-
-      {/* Left branding */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none"
           style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.04) 1px,transparent 1px)',backgroundSize:'50px 50px'}}/>
@@ -64,10 +55,10 @@ export default function LoginPage() {
           <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
           <div className="grid grid-cols-2 gap-3 text-left">
             {[
-              {icon:'🎓', label:'Student Results', sub:'Check your marks'},
-              {icon:'🖼️', label:'Gallery',         sub:'Photos & events'},
-              {icon:'📅', label:'Timetable',       sub:'Class schedule'},
-              {icon:'📢', label:'Notices',         sub:'School updates'},
+              {icon:'🎓',label:'Student Results',sub:'Check your marks'},
+              {icon:'🖼️',label:'Gallery',sub:'Photos & events'},
+              {icon:'📅',label:'Timetable',sub:'Class schedule'},
+              {icon:'📢',label:'Notices',sub:'School updates'},
             ].map(f=>(
               <div key={f.label} className="bg-white/5 border border-white/8 rounded-2xl p-3">
                 <div className="text-xl mb-1">{f.icon}</div>
@@ -79,10 +70,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
-
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>
             <div className="font-display text-xl font-black text-white">GHS Babi Khel</div>
@@ -124,7 +113,7 @@ export default function LoginPage() {
                     className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
                   />
                   <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold transition-colors">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">
                     {showPass ? 'Hide' : 'Show'}
                   </button>
                 </div>
@@ -138,8 +127,7 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 pt-5 border-t border-white/8 space-y-3 text-center text-sm">
-              <p className="text-white/35">
-                No account?{' '}
+              <p className="text-white/35">No account?{' '}
                 <Link href="/signup" className="text-green-400 font-bold hover:text-green-300">Create one →</Link>
               </p>
               <Link href="/" className="block text-white/20 text-xs hover:text-white/40">← Back to School Website</Link>
