@@ -1,9 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -19,48 +17,34 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Step 1: Sign in
-      const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ email: email.trim(), password }),
-      })
-      const authData = await authRes.json()
+      // Create fresh client ONLY when submitting - never at module level
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
 
-      if (!authRes.ok || authData.error) {
+      // Sign out any existing session first to avoid stale data
+      await supabase.auth.signOut()
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+
+      if (signInError || !data.user) {
         setError('Wrong email or password. Please try again.')
         setLoading(false)
         return
       }
 
-      const userId = authData.user?.id
-      const accessToken = authData.access_token
-      const refreshToken = authData.refresh_token
+      // Get role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle() as any
 
-      // Step 2: Store session so Supabase client can use it
-      const projectRef = SUPABASE_URL.split('//')[1].split('.')[0]
-      const storageKey = `sb-${projectRef}-auth-token`
-      localStorage.setItem(storageKey, JSON.stringify({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        expires_at: Math.floor(Date.now() / 1000) + (authData.expires_in || 3600),
-        expires_in: authData.expires_in || 3600,
-        token_type: 'bearer',
-        user: authData.user,
-      }))
-
-      // Step 3: Get role
-      let role = 'student'
-      try {
-        const profileRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${userId}&limit=1`,
-          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${accessToken}` } }
-        )
-        const profiles = await profileRes.json()
-        if (profiles?.[0]?.role) role = profiles[0].role
-      } catch (_) {}
-
-      // Step 4: Redirect based on role
+      const role = profile?.role || 'student'
       window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
     } catch (_) {
