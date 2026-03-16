@@ -95,7 +95,7 @@ export default async function HomePage() {
                 </Link>
               </div>
               <div className="mt-4">
-                <Link href="/dashboard" className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-black px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:-translate-y-0.5 transition-all">
+                <Link href="/go" className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-black px-8 py-3.5 rounded-2xl text-sm shadow-lg hover:-translate-y-0.5 transition-all">
                   🚀 Go to Dashboard
                 </Link>
               </div>
