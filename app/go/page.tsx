@@ -4,14 +4,32 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function GoPage() {
   useEffect(() => {
-    createClient().auth.getSession().then(({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
-      createClient().from('profiles').select('role').eq('id', session.user.id).maybeSingle()
-        .then(({ data }: any) => {
-          window.location.href = (data?.role === 'admin') ? '/admin' : '/dashboard'
-        })
-        .catch(() => { window.location.href = '/dashboard' })
-    })
+    async function redirect() {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        window.location.href = '/login'
+        return
+      }
+
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .maybeSingle() as any
+
+        if (data?.role === 'admin') {
+          window.location.href = '/admin'
+        } else {
+          window.location.href = '/dashboard'
+        }
+      } catch (_) {
+        window.location.href = '/dashboard'
+      }
+    }
+    redirect()
   }, [])
 
   return (
