@@ -20,10 +20,38 @@ export default function LoginPage() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      const { data, error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      if (err || !data.user) { setError('Wrong email or password.'); setLoading(false); return }
-      const { data: p } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle() as any
-      window.location.href = p?.role === 'admin' ? '/admin' : '/dashboard'
+
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+
+      if (err || !data.user) {
+        setError('Wrong email or password.')
+        setLoading(false)
+        return
+      }
+
+      // Check if admin by email directly - no RLS issue
+      const adminEmails = ['faheemk.mohmand@gmail.com']
+      if (adminEmails.includes(data.user.email || '')) {
+        window.location.href = '/admin'
+        return
+      }
+
+      // For non-admin, also try profiles table
+      try {
+        const { data: p } = await supabase
+          .from('profiles').select('role')
+          .eq('id', data.user.id).maybeSingle() as any
+        if (p?.role === 'admin') {
+          window.location.href = '/admin'
+          return
+        }
+      } catch(_) {}
+
+      window.location.href = '/dashboard'
+
     } catch(_) { setError('Something went wrong.'); setLoading(false) }
   }
 
@@ -34,33 +62,57 @@ export default function LoginPage() {
           <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl">🏫</div>
           <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
           <p className="text-white/40 text-sm mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
+          <div className="grid grid-cols-2 gap-3 text-left">
+            {[
+              {icon:'🎓',label:'Student Results',sub:'Check your marks'},
+              {icon:'🖼️',label:'Gallery',sub:'Photos & events'},
+              {icon:'📅',label:'Timetable',sub:'Class schedule'},
+              {icon:'📢',label:'Notices',sub:'School updates'},
+            ].map(f=>(
+              <div key={f.label} className="bg-white/5 border border-white/8 rounded-2xl p-3">
+                <div className="text-xl mb-1">{f.icon}</div>
+                <div className="text-white text-sm font-bold">{f.label}</div>
+                <div className="text-white/35 text-xs">{f.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
+          <div className="lg:hidden text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>
+            <div className="text-xl font-black text-white">GHS Babi Khel</div>
+          </div>
           <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
             <h2 className="text-2xl font-black text-white mb-1">Sign In</h2>
             <p className="text-white/40 text-sm mb-6">Access your school portal</p>
             {error && <div className="bg-red-500/15 border border-red-400/30 text-red-300 text-sm font-semibold rounded-xl px-4 py-3 mb-5">⚠️ {error}</div>}
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email</label>
-                <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@email.com" autoComplete="email" disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 disabled:opacity-50"/>
+                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                  placeholder="you@email.com" autoComplete="email" disabled={loading}
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
                 <div className="relative">
-                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your password" autoComplete="current-password" disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 disabled:opacity-50"/>
-                  <button type="button" onClick={()=>setShowPass(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">{showPass?'Hide':'Show'}</button>
+                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                    placeholder="Your password" autoComplete="current-password" disabled={loading}
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
+                  <button type="button" onClick={()=>setShowPass(v=>!v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">
+                    {showPass?'Hide':'Show'}
+                  </button>
                 </div>
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg">
+              <button type="submit" disabled={loading}
+                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg mt-2">
                 {loading?<><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Signing in...</>:<><span>🚀</span> Sign In</>}
               </button>
             </form>
-            <div className="mt-6 pt-5 border-t border-white/8 text-center text-sm space-y-2">
+            <div className="mt-6 pt-5 border-t border-white/8 space-y-2 text-center text-sm">
               <p className="text-white/35">No account? <Link href="/signup" className="text-green-400 font-bold">Create one →</Link></p>
               <Link href="/" className="block text-white/20 text-xs hover:text-white/40">← Back to School Website</Link>
             </div>

@@ -2,6 +2,8 @@
 import { useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
+const ADMIN_EMAILS = ['faheemk.mohmand@gmail.com']
+
 export default function GoPage() {
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -10,8 +12,22 @@ export default function GoPage() {
     )
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
-      const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle() as any
-      window.location.href = p?.role === 'admin' ? '/admin' : '/dashboard'
+
+      // Check admin by email first (always works, no RLS issues)
+      if (ADMIN_EMAILS.includes(session.user.email || '')) {
+        window.location.href = '/admin'
+        return
+      }
+
+      // Also check profiles table role
+      try {
+        const { data: p } = await supabase
+          .from('profiles').select('role')
+          .eq('id', session.user.id).maybeSingle() as any
+        if (p?.role === 'admin') { window.location.href = '/admin'; return }
+      } catch(_) {}
+
+      window.location.href = '/dashboard'
     }).catch(() => { window.location.href = '/login' })
   }, [])
 
