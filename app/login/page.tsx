@@ -2,12 +2,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
 export default function LoginPage() {
-  const [email, setEmail]     = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]  = useState(false)
-  const [error, setError]      = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -16,51 +19,48 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Use fetch directly to Supabase REST API - no Supabase JS client on this page
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          },
-          body: JSON.stringify({ email: email.trim(), password }),
-        }
-      )
+      // Step 1: Sign in
+      const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ email: email.trim(), password }),
+      })
+      const authData = await authRes.json()
 
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
+      if (!authRes.ok || authData.error) {
         setError('Wrong email or password. Please try again.')
         setLoading(false)
         return
       }
 
-      // Get role from profiles
-      const profileRes = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${data.user.id}&limit=1`,
-        {
-          headers: {
-            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            'Authorization': `Bearer ${data.access_token}`,
-          },
-        }
-      )
-      const profiles = await profileRes.json()
-      const role = profiles?.[0]?.role || 'student'
+      const userId = authData.user?.id
+      const accessToken = authData.access_token
+      const refreshToken = authData.refresh_token
 
-      // Store session in localStorage for Supabase client to pick up
-      const storageKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL!.split('//')[1].split('.')[0]}-auth-token`
+      // Step 2: Store session so Supabase client can use it
+      const projectRef = SUPABASE_URL.split('//')[1].split('.')[0]
+      const storageKey = `sb-${projectRef}-auth-token`
       localStorage.setItem(storageKey, JSON.stringify({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
-        expires_in: data.expires_in,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: Math.floor(Date.now() / 1000) + (authData.expires_in || 3600),
+        expires_in: authData.expires_in || 3600,
         token_type: 'bearer',
-        user: data.user,
+        user: authData.user,
       }))
 
+      // Step 3: Get role
+      let role = 'student'
+      try {
+        const profileRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${userId}&limit=1`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${accessToken}` } }
+        )
+        const profiles = await profileRes.json()
+        if (profiles?.[0]?.role) role = profiles[0].role
+      } catch (_) {}
+
+      // Step 4: Redirect based on role
       window.location.href = role === 'admin' ? '/admin' : '/dashboard'
 
     } catch (_) {
@@ -114,31 +114,19 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  autoComplete="email"
-                  disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
-                />
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                  placeholder="you@email.com" autoComplete="email" disabled={loading}
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
                 <div className="relative">
-                  <input
-                    type={showPass ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Your password"
-                    autoComplete="current-password"
-                    disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"
-                  />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
+                  <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                    placeholder="Your password" autoComplete="current-password" disabled={loading}
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
+                  <button type="button" onClick={()=>setShowPass(v=>!v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">
-                    {showPass ? 'Hide' : 'Show'}
+                    {showPass?'Hide':'Show'}
                   </button>
                 </div>
               </div>
