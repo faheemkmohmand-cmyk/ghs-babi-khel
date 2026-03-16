@@ -28,13 +28,8 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session on every request - writes updated cookie back to browser
-  await supabase.auth.getUser()
-
-  const path = request.nextUrl.pathname
-
-  // Only protect /dashboard and /admin - everything else is public
   const { data: { user } } = await supabase.auth.getUser()
+  const path = request.nextUrl.pathname
 
   if (path.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -47,5 +42,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 }
