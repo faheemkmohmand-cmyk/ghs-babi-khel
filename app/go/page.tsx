@@ -1,24 +1,18 @@
 'use client'
 import { useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function GoPage() {
   useEffect(() => {
-    async function go() {
-      const supabase = createClient()
-      
-      // Small wait to ensure session is loaded from storage
-      await new Promise(r => setTimeout(r, 200))
-      
-      const { data: { session } } = await supabase.auth.getSession()
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
-
-      const { data } = await supabase
-        .from('profiles').select('role').eq('id', session.user.id).maybeSingle() as any
-
-      window.location.href = data?.role === 'admin' ? '/admin' : '/dashboard'
-    }
-    go()
+      const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle() as any
+      window.location.href = p?.role === 'admin' ? '/admin' : '/dashboard'
+    }).catch(() => { window.location.href = '/login' })
   }, [])
 
   return (
