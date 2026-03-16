@@ -4,25 +4,21 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function GoPage() {
   useEffect(() => {
-    const supabase = createClient()
-
-    // onAuthStateChange fires immediately with current session state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      subscription.unsubscribe()
-
-      if (!session) {
-        window.location.href = '/login'
-        return
-      }
+    async function go() {
+      const supabase = createClient()
+      
+      // Small wait to ensure session is loaded from storage
+      await new Promise(r => setTimeout(r, 200))
+      
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
 
       const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .maybeSingle() as any
+        .from('profiles').select('role').eq('id', session.user.id).maybeSingle() as any
 
       window.location.href = data?.role === 'admin' ? '/admin' : '/dashboard'
-    })
+    }
+    go()
   }, [])
 
   return (
