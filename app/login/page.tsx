@@ -1,71 +1,56 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const [email, setEmail]       = useState('')
+  const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [loading, setLoading]  = useState(false)
+  const [error, setError]      = useState('')
+  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!email.trim() || !password) { setError('Please fill in both fields.'); return }
+    if (!email || !password) { setError('Please fill in both fields.'); return }
     setLoading(true)
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+
+    if (signInError) {
+      setLoading(false)
+      setError('Wrong email or password. Please try again.')
+      return
+    }
+
+    // Get role safely — never crashes
+    let role = 'student'
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      const { data: profile } = await supabase
+        .from('profiles').select('role').eq('id', data.user.id).maybeSingle()
+      if (profile?.role) role = profile.role
+    } catch (_) {}
 
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      })
-
-      if (err || !data.user) {
-        setError('Wrong email or password.')
-        setLoading(false)
-        return
-      }
-
-      // Check if admin by email directly - no RLS issue
-      const adminEmails = ['faheemk.mohmand@gmail.com']
-      if (adminEmails.includes(data.user.email || '')) {
-        window.location.href = '/admin'
-        return
-      }
-
-      // For non-admin, also try profiles table
-      try {
-        const { data: p } = await supabase
-          .from('profiles').select('role')
-          .eq('id', data.user.id).maybeSingle() as any
-        if (p?.role === 'admin') {
-          window.location.href = '/admin'
-          return
-        }
-      } catch(_) {}
-
-      window.location.href = '/dashboard'
-
-    } catch(_) { setError('Something went wrong.'); setLoading(false) }
+    // Hard redirect — guaranteed to work on Vercel
+    window.location.href = role === 'admin' ? '/admin' : '/dashboard'
   }
 
   return (
     <div className="min-h-screen flex" style={{background:'linear-gradient(135deg,#020810 0%,#0a1628 50%,#014d26 100%)'}}>
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12">
-        <div className="text-center max-w-sm">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl">🏫</div>
+      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none"
+          style={{backgroundImage:'linear-gradient(rgba(74,222,128,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,128,0.04) 1px,transparent 1px)',backgroundSize:'50px 50px'}}/>
+        <div className="absolute top-0 left-0 w-96 h-96 bg-green-900/15 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"/>
+        <div className="relative z-10 text-center max-w-sm">
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-5xl mx-auto mb-6 shadow-2xl ring-8 ring-green-400/10">🏫</div>
           <h1 className="font-display text-3xl font-black text-white mb-3">Government High School<br/>Babi Khel</h1>
-          <p className="text-white/40 text-sm mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 2018</p>
+          <p className="text-white/40 text-sm leading-relaxed mb-8">Khyber Pakhtunkhwa, Pakistan<br/>Providing quality education since 1989</p>
           <div className="grid grid-cols-2 gap-3 text-left">
             {[
               {icon:'🎓',label:'Student Results',sub:'Check your marks'},
-              {icon:'🖼️',label:'Gallery',sub:'Photos & events'},
+              {icon:'✅',label:'Attendance',sub:'View your record'},
               {icon:'📅',label:'Timetable',sub:'Class schedule'},
               {icon:'📢',label:'Notices',sub:'School updates'},
             ].map(f=>(
@@ -78,43 +63,57 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-950 to-green-400 flex items-center justify-center text-2xl mx-auto mb-3">🏫</div>
-            <div className="text-xl font-black text-white">GHS Babi Khel</div>
+            <div className="font-display text-xl font-black text-white">GHS Babi Khel</div>
           </div>
+
           <div className="bg-white/6 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
-            <h2 className="text-2xl font-black text-white mb-1">Sign In</h2>
+            <h2 className="font-display text-2xl font-black text-white mb-1">Sign In</h2>
             <p className="text-white/40 text-sm mb-6">Access your school portal</p>
-            {error && <div className="bg-red-500/15 border border-red-400/30 text-red-300 text-sm font-semibold rounded-xl px-4 py-3 mb-5">⚠️ {error}</div>}
+
+            {error && (
+              <div className="bg-red-500/15 border border-red-400/30 text-red-300 text-sm font-semibold rounded-xl px-4 py-3 mb-5">
+                ⚠️ {error}
+              </div>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Email Address</label>
                 <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
                   placeholder="you@email.com" autoComplete="email" disabled={loading}
-                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
+                  className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"/>
               </div>
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-1.5">Password</label>
                 <div className="relative">
                   <input type={showPass?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
                     placeholder="Your password" autoComplete="current-password" disabled={loading}
-                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 transition-all disabled:opacity-50"/>
+                    className="w-full bg-white/8 border-2 border-white/10 text-white placeholder-white/20 rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-green-400/50 focus:bg-white/10 transition-all disabled:opacity-50"/>
                   <button type="button" onClick={()=>setShowPass(v=>!v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 text-sm font-bold">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors text-sm">
                     {showPass?'Hide':'Show'}
                   </button>
                 </div>
               </div>
               <button type="submit" disabled={loading}
-                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg mt-2">
-                {loading?<><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Signing in...</>:<><span>🚀</span> Sign In</>}
+                className="w-full bg-green-900 hover:bg-green-950 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg mt-2">
+                {loading
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Taking you in...</>
+                  : <><span>🚀</span>Sign In</>}
               </button>
             </form>
-            <div className="mt-6 pt-5 border-t border-white/8 space-y-2 text-center text-sm">
-              <p className="text-white/35">No account? <Link href="/signup" className="text-green-400 font-bold">Create one →</Link></p>
-              <Link href="/" className="block text-white/20 text-xs hover:text-white/40">← Back to School Website</Link>
+
+            <div className="mt-6 pt-5 border-t border-white/8 space-y-3 text-center text-sm">
+              <p className="text-white/35">
+                No account?{' '}
+                <Link href="/signup" className="text-green-400 font-bold hover:text-green-300 transition-colors">Create one →</Link>
+              </p>
+              <Link href="/" className="block text-white/20 text-xs hover:text-white/40 transition-colors">← Back to School Website</Link>
             </div>
           </div>
         </div>
